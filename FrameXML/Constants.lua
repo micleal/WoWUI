@@ -1,7 +1,43 @@
-﻿--
+-- BIG PROBLEM HERE. NOT SAVING REFS
+--
 -- New constants should be added to this file and other constants
 -- deprecated and moved to this file.
 --
+
+--
+-- Expansion Info
+--
+MAX_PLAYER_LEVEL_TABLE = {};
+MAX_PLAYER_LEVEL_TABLE[LE_EXPANSION_CLASSIC] = 60;
+MAX_PLAYER_LEVEL_TABLE[LE_EXPANSION_BURNING_CRUSADE] = 70;
+--MAX_PLAYER_LEVEL_TABLE[LE_EXPANSION_WRATH_OF_THE_LICH_KING] = 80;
+--MAX_PLAYER_LEVEL_TABLE[LE_EXPANSION_CATACLYSM] = 85;
+--MAX_PLAYER_LEVEL_TABLE[LE_EXPANSION_MISTS_OF_PANDARIA] = 90;
+--MAX_PLAYER_LEVEL_TABLE[LE_EXPANSION_WARLORDS_OF_DRAENOR] = 100;
+--MAX_PLAYER_LEVEL_TABLE[LE_EXPANSION_LEGION] = 110;
+--MAX_PLAYER_LEVEL_TABLE[LE_EXPANSION_BATTLE_FOR_AZEROTH] = 120;
+--MAX_PLAYER_LEVEL_TABLE[LE_EXPANSION_9_0] = 120;
+--MAX_PLAYER_LEVEL_TABLE[LE_EXPANSION_10_0] = 120;
+--MAX_PLAYER_LEVEL_TABLE[LE_EXPANSION_11_0] = 120;
+
+NPE_TUTORIAL_COMPLETE_LEVEL = 10;
+
+
+AREA_NAME_FONT_COLOR = CreateColor(1.0, 0.9294, 0.7607);
+AREA_DESCRIPTION_FONT_COLOR = HIGHLIGHT_FONT_COLOR;
+INVASION_FONT_COLOR = CreateColor(0.78, 1, 0);
+INVASION_DESCRIPTION_FONT_COLOR = CreateColor(1, 0.973, 0.035);
+
+FACTION_BAR_COLORS = {
+	[1] = {r = 0.8, g = 0.3, b = 0.22},
+	[2] = {r = 0.8, g = 0.3, b = 0.22},
+	[3] = {r = 0.75, g = 0.27, b = 0},
+	[4] = {r = 0.9, g = 0.7, b = 0},
+	[5] = {r = 0, g = 0.6, b = 0.1},
+	[6] = {r = 0, g = 0.6, b = 0.1},
+	[7] = {r = 0, g = 0.6, b = 0.1},
+	[8] = {r = 0, g = 0.6, b = 0.1},
+};
 
 WORLD_QUEST_ICONS_BY_PROFESSION = {
 	[129] = "worldquest-icon-firstaid",
@@ -28,6 +64,36 @@ CHAT_FONT_HEIGHTS = {
 	[4] = 18
 };
 
+MATERIAL_TEXT_COLOR_TABLE = {
+	["Default"] = {0.18, 0.12, 0.06},
+	["Stone"] = {1.0, 1.0, 1.0},
+	["Parchment"] = {0.18, 0.12, 0.06},
+	["Marble"] = {0, 0, 0},
+	["Silver"] = {0.12, 0.12, 0.12},
+	["Bronze"] = {0.18, 0.12, 0.06},
+	["ParchmentLarge"] = {.141, 0, 0}
+};
+MATERIAL_TITLETEXT_COLOR_TABLE = {
+	["Default"] = {0, 0, 0},
+	["Stone"] = {0.93, 0.82, 0},
+	["Parchment"] = {0, 0, 0},
+	["Marble"] = {0.93, 0.82, 0},
+	["Silver"] = {0.93, 0.82, 0},
+	["Bronze"] = {0.93, 0.82, 0},
+	["ParchmentLarge"] = {.208, 0, 0}
+};
+
+FRIENDS_BNET_NAME_COLOR = CreateColor(0.510, 0.773, 1.0);
+FRIENDS_BNET_BACKGROUND_COLOR = CreateColor(0, 0.694, 0.941, 0.05);
+FRIENDS_WOW_NAME_COLOR = CreateColor(0.996, 0.882, 0.361);
+FRIENDS_WOW_BACKGROUND_COLOR = CreateColor(1.0, 0.824, 0.0, 0.05);
+FRIENDS_GRAY_COLOR = CreateColor(0.486, 0.518, 0.541);
+FRIENDS_OFFLINE_BACKGROUND_COLOR = CreateColor(0.588, 0.588, 0.588, 0.05);
+FRIENDS_BNET_NAME_COLOR_CODE = "|cff82c5ff";
+FRIENDS_BROADCAST_TIME_COLOR_CODE = "|cff4381a8"
+FRIENDS_WOW_NAME_COLOR_CODE = "|cfffde05c";
+FRIENDS_OTHER_NAME_COLOR_CODE = "|cff7b8489";
+
 HTML_START = "<html><body><p>";
 HTML_START_CENTERED = "<html><body><p align=\"center\">";
 HTML_END = "</p></body></html>";
@@ -37,9 +103,9 @@ HTML_END = "</p></body></html>";
 --
 CLASS_SORT_ORDER = {
 	"WARRIOR",
-	"DEATHKNIGHT",
+	--"DEATHKNIGHT",
 	"PALADIN",
-	"MONK",
+	--"MONK",
 	"PRIEST",
 	"SHAMAN",
 	"DRUID",
@@ -47,7 +113,7 @@ CLASS_SORT_ORDER = {
 	"MAGE",
 	"WARLOCK",
 	"HUNTER",
-	"DEMONHUNTER",
+	--"DEMONHUNTER",
 };
 MAX_CLASSES = #CLASS_SORT_ORDER;
 
@@ -87,6 +153,20 @@ SCHOOL_STRINGS = {
 
 MAX_POWER_PER_EMBER = 10;
 
+--
+-- Talent
+--
+SHOW_TALENT_LEVEL = 10;
+SHOW_PVP_TALENT_LEVEL = 20;
+SHOW_PVP_LEVEL = 10;
+SHOW_LFD_LEVEL = 15;
+SHOW_MASTERY_LEVEL = 78;
+CLASS_TALENT_LEVELS = {
+	["DEFAULT"]		= { 15, 30, 45, 60, 75, 90, 100 };
+	["DEATHKNIGHT"]	= { 56, 57, 58, 60, 75, 90, 100 };
+	["DEMONHUNTER"]	= { 99, 100, 102, 104, 106, 108, 110 };
+}
+
 SPECIALIZATION_TAB = 1;
 TALENTS_TAB = 2;
 NUM_TALENT_FRAME_TABS = 2;
@@ -94,6 +174,7 @@ NUM_TALENT_FRAME_TABS = 2;
 --
 -- Specs
 --
+SHOW_SPEC_LEVEL = 10
 SPEC_WARLOCK_AFFLICTION = 1;	--These are spec indices
 SPEC_WARLOCK_DEMONOLOGY = 2;
 SPEC_WARLOCK_DESTRUCTION = 3;
@@ -146,35 +227,35 @@ ITEM_UNIQUE_EQUIPPED = -1;
 MAX_NUM_SOCKETS = 3;
 
 BAG_ITEM_QUALITY_COLORS = {
-	[Enum.ItemQuality.Common] = COMMON_GRAY_COLOR,
-	[Enum.ItemQuality.Uncommon] = UNCOMMON_GREEN_COLOR,
-	[Enum.ItemQuality.Rare] = RARE_BLUE_COLOR,
-	[Enum.ItemQuality.Epic] = EPIC_PURPLE_COLOR,
-	[Enum.ItemQuality.Legendary] = LEGENDARY_ORANGE_COLOR,
-	[Enum.ItemQuality.Artifact] = ARTIFACT_GOLD_COLOR,
-	[Enum.ItemQuality.Heirloom] = HEIRLOOM_BLUE_COLOR,
-	[Enum.ItemQuality.WoWToken] = HEIRLOOM_BLUE_COLOR,
+	[LE_ITEM_QUALITY_COMMON] = {r=0.65882,g=0.65882,b=0.65882},
+	[LE_ITEM_QUALITY_UNCOMMON] = {r=0.08235, g=0.70196, b=0},
+	[LE_ITEM_QUALITY_RARE] = {r=0, g=0.56863, b=0.94902},
+	[LE_ITEM_QUALITY_EPIC] = {r=0.78431, g=0.27059, b=0.98039},
+	[LE_ITEM_QUALITY_LEGENDARY] = {r=1, g=0.50196, b=0},
+	[LE_ITEM_QUALITY_ARTIFACT] = {r=0.90196, g=0.8, b=0.50196},
+	[LE_ITEM_QUALITY_HEIRLOOM] = {r=0, g=0.8, b=1},
+	[LE_ITEM_QUALITY_WOW_TOKEN] = {r=0, g=0.8, b=1},
 }
 
 NEW_ITEM_ATLAS_BY_QUALITY = {
-	[Enum.ItemQuality.Poor] = "bags-glow-white",
-	[Enum.ItemQuality.Common] = "bags-glow-white",
-	[Enum.ItemQuality.Uncommon] = "bags-glow-green",
-	[Enum.ItemQuality.Rare] = "bags-glow-blue",
-	[Enum.ItemQuality.Epic] = "bags-glow-purple",
-	[Enum.ItemQuality.Legendary] = "bags-glow-orange",
-	[Enum.ItemQuality.Artifact] = "bags-glow-artifact",
-	[Enum.ItemQuality.Heirloom] = "bags-glow-heirloom",
+	[LE_ITEM_QUALITY_POOR] = "bags-glow-white",
+	[LE_ITEM_QUALITY_COMMON] = "bags-glow-white",
+	[LE_ITEM_QUALITY_UNCOMMON] = "bags-glow-green",
+	[LE_ITEM_QUALITY_RARE] = "bags-glow-blue",
+	[LE_ITEM_QUALITY_EPIC] = "bags-glow-purple",
+	[LE_ITEM_QUALITY_LEGENDARY] = "bags-glow-orange",
+	[LE_ITEM_QUALITY_ARTIFACT] = "bags-glow-artifact",
+	[LE_ITEM_QUALITY_HEIRLOOM] = "bags-glow-heirloom",
 };
 
 -- Loot
 LOOT_BORDER_BY_QUALITY = {
-	[Enum.ItemQuality.Uncommon] = "loottoast-itemborder-green",
-	[Enum.ItemQuality.Rare] = "loottoast-itemborder-blue",
-	[Enum.ItemQuality.Epic] = "loottoast-itemborder-purple",
-	[Enum.ItemQuality.Legendary] = "loottoast-itemborder-orange",
-	[Enum.ItemQuality.Heirloom] = "loottoast-itemborder-heirloom",
-	[Enum.ItemQuality.Artifact] = "loottoast-itemborder-artifact",
+	[LE_ITEM_QUALITY_UNCOMMON] = "loottoast-itemborder-green",
+	[LE_ITEM_QUALITY_RARE] = "loottoast-itemborder-blue",
+	[LE_ITEM_QUALITY_EPIC] = "loottoast-itemborder-purple",
+	[LE_ITEM_QUALITY_LEGENDARY] = "loottoast-itemborder-orange",
+	[LE_ITEM_QUALITY_HEIRLOOM] = "loottoast-itemborder-heirloom",
+	[LE_ITEM_QUALITY_ARTIFACT] = "loottoast-itemborder-artifact",
 };
 
 LOOT_ROLL_TYPE_PASS = 0;
@@ -226,11 +307,10 @@ BACKPACK_CONTAINER = 0;
 BANK_CONTAINER = -1;
 BANK_CONTAINER_INVENTORY_OFFSET = 39; -- Used for PickupInventoryItem
 KEYRING_CONTAINER = -2;
-REAGENTBANK_CONTAINER = -3;
 
 NUM_BAG_SLOTS = 4;
-NUM_BANKGENERIC_SLOTS = 28;
-NUM_BANKBAGSLOTS = 7;
+NUM_BANKGENERIC_SLOTS = 24;
+NUM_BANKBAGSLOTS = 6;
 
 -- Item IDs
 HEARTHSTONE_ITEM_ID = 6948;
@@ -384,7 +464,7 @@ CALENDAR_FIRST_WEEKDAY			= 1;		-- 1=SUN 2=MON 3=TUE 4=WED 5=THU 6=FRI 7=SAT
 -- Event Types
 CALENDAR_EVENTTYPE_RAID			= Enum.CalendarEventType.Raid;
 CALENDAR_EVENTTYPE_DUNGEON		= Enum.CalendarEventType.Dungeon;
-CALENDAR_EVENTTYPE_PVP			= Enum.CalendarEventType.PvP;
+CALENDAR_EVENTTYPE_PVP			= Enum.CalendarEventType.Pvp;
 CALENDAR_EVENTTYPE_MEETING		= Enum.CalendarEventType.Meeting;
 CALENDAR_EVENTTYPE_OTHER		= Enum.CalendarEventType.Other;
 CALENDAR_MAX_EVENTTYPE			= Enum.CalendarEventType.Other;
@@ -412,11 +492,10 @@ CALENDAR_MAX_INVITETYPE			= CALENDAR_INVITETYPE_SIGNUP;
 QuestDifficultyColors = {
 	["impossible"]		= { r = 1.00, g = 0.10, b = 0.10, font = "QuestDifficulty_Impossible" };
 	["verydifficult"]	= { r = 1.00, g = 0.50, b = 0.25, font = "QuestDifficulty_VeryDifficult" };
-	["difficult"]		= { r = 1.00, g = 0.82, b = 0.00, font = "QuestDifficulty_Difficult" };
+	["difficult"]		= { r = 1.00, g = 1.00, b = 0.00, font = "QuestDifficulty_Difficult" };
 	["standard"]		= { r = 0.25, g = 0.75, b = 0.25, font = "QuestDifficulty_Standard" };
 	["trivial"]			= { r = 0.50, g = 0.50, b = 0.50, font = "QuestDifficulty_Trivial" };
 	["header"]			= { r = 0.70, g = 0.70, b = 0.70, font = "QuestDifficulty_Header" };
-	["disabled"]		= { r = 0.498, g = 0.498, b = 0.498, font = "QuestDifficulty_Impossible" };
 };
 
 QuestDifficultyHighlightColors = {
@@ -426,7 +505,6 @@ QuestDifficultyHighlightColors = {
 	["standard"]		= { r = 0.43, g = 0.93, b = 0.43, font = "QuestDifficulty_Standard" };
 	["trivial"]			= { r = 0.70, g = 0.70, b = 0.70,  font = "QuestDifficulty_Trivial" };
 	["header"]			= { r = 1.00, g = 1.00, b = 1.00, font = "QuestDifficulty_Header" };
-	["disabled"]		= { r = 0.60, g = 0.60, b = 0.60, font = "QuestDifficulty_Impossible" };
 };
 
 --
@@ -497,6 +575,10 @@ SHOW_SEARCH_BAR_NUM_FRIENDS = 12;
 -- Search box
 MIN_CHARACTER_SEARCH = 3;
 
+-- faction
+PLAYER_FACTION_GROUP = { [0] = "Horde", [1] = "Alliance", Horde = 0, Alliance = 1 };
+PLAYER_FACTION_COLORS = { [0] = CreateColor(0.90, 0.05, 0.07), [1] = CreateColor(0.29, 0.33, 0.91) }
+
 -- Panel default size
 PANEL_DEFAULT_WIDTH = 338;
 PANEL_DEFAULT_HEIGHT = 424;
@@ -545,14 +627,12 @@ CAT_FORM = 1;
 BEAR_FORM = 5;
 MOONKIN_FORM = 31;
 
--- Rogue Forms
-ROGUE_STEALTH = 30;
-
 -- PVP Global Lua Constants
 CONQUEST_CURRENCY = 390;
 HONOR_CURRENCY = 392;
 JUSTICE_CURRENCY = 395;
 VALOR_CURRENCY = 396;
+SHOW_CONQUEST_LEVEL = 70;
 
 -- Looking for Guild Parameters
 LFGUILD_PARAM_QUESTS 	= 1;
@@ -653,6 +733,7 @@ PLAYER_REPORT_TYPE_BAD_GUILD_NAME = "badguildname";
 PLAYER_REPORT_TYPE_CHEATING = "cheater";
 PLAYER_REPORT_TYPE_BAD_BATTLEPET_NAME = "badbattlepetname";
 PLAYER_REPORT_TYPE_BAD_PET_NAME = "badpetname";
+PLAYER_REPORT_TYPE_BAD_ARENA_TEAM_NAME = "badarenateamname";
 
 --Loot
 BONUS_ROLL_REQUIRED_CURRENCY = 697;
@@ -664,6 +745,7 @@ QUEST_TYPE_SCENARIO = 98;
 MAX_QUESTS = 25;
 MAX_OBJECTIVES = 20;
 MAX_QUESTLOG_QUESTS = 25;
+MAX_WATCHABLE_QUESTS = 25;
 
 WORLD_QUESTS_TIME_CRITICAL_MINUTES = 15;
 WORLD_QUESTS_TIME_LOW_MINUTES = 75;
@@ -681,13 +763,24 @@ LFG_CATEGORY_NAMES = {
 	[LE_LFG_CATEGORY_BATTLEFIELD] = LFG_CATEGORY_BATTLEFIELD,
 }
 
+-- Instance Difficulty
+DIFFICULTY_DUNGEON_NORMAL = 1;
+DIFFICULTY_DUNGEON_HEROIC = 2;
+DIFFICULTY_RAID10_NORMAL = 3;
+DIFFICULTY_RAID25_NORMAL = 4;
+DIFFICULTY_RAID10_HEROIC = 5;
+DIFFICULTY_RAID25_HEROIC = 6;
+DIFFICULTY_RAID_LFR = 7;
+DIFFICULTY_DUNGEON_CHALLENGE = 8;
+DIFFICULTY_RAID40 = 9;
+DIFFICULTY_PRIMARYRAID_NORMAL = 14;
+DIFFICULTY_PRIMARYRAID_HEROIC = 15;
+DIFFICULTY_PRIMARYRAID_MYTHIC = 16;
+DIFFICULTY_PRIMARYRAID_LFR = 17;
+
 -- PVP
 MAX_ARENA_TEAMS = 2;
 MAX_WORLD_PVP_QUEUES = 2;
-CONQUEST_SIZE_STRINGS = { ARENA_2V2, ARENA_3V3, BATTLEGROUND_10V10 };
-CONQUEST_TYPE_STRINGS = { ARENA, ARENA, BATTLEGROUNDS };
-CONQUEST_SIZES = {2, 3, 10};
-CONQUEST_BRACKET_INDEXES = { 1, 2, 4 }; -- 5v5 was removed
 
 -- Chat
 CHANNEL_INVITE_TIMEOUT = 60;
@@ -714,8 +807,6 @@ QUEST_TAG_TCOORDS = {
 	["STORY"] = { 0.703125, 0.84375, 0.28125, 0.5625 },
 	["ALLIANCE"] = { 0.421875, 0.5625, 0.28125, 0.5625 },
 	["HORDE"] = { 0.5625, 0.703125, 0.28125, 0.5625 },
-	["EXPIRING_SOON"] = { 0.84375, 0.984375, 0.5625, 0.84375 },
-	["EXPIRING"] = { 0.703125, 0.84375, 0.5625, 0.84375 },
 	[Enum.QuestTag.Dungeon] = { 0.421875, 0.5625, 0, 0.28125 },
 	[Enum.QuestTag.Scenario] = { 0.5625, 0.703125, 0, 0.28125 },
 	[Enum.QuestTag.Account] = { 0.84375, 0.984375, 0, 0.28125 },
@@ -730,8 +821,8 @@ QUEST_TAG_TCOORDS = {
 };
 
 WORLD_QUEST_TYPE_TCOORDS = {
-	[Enum.QuestTagType.Dungeon] = { 0.421875, 0.5625, 0, 0.28125 },
-	[Enum.QuestTagType.Raid] = { 0.703125, 0.84375, 0, 0.28125 },
+	[LE_QUEST_TAG_TYPE_DUNGEON] = { 0.421875, 0.5625, 0, 0.28125 },
+	[LE_QUEST_TAG_TYPE_RAID] = { 0.703125, 0.84375, 0, 0.28125 },
 };
 
 -- MATCH CONDITIONS
@@ -743,7 +834,7 @@ FIRST_NUMBER_CAP_VALUE = 1000;
 
 -- GARRISONS
 GARRISON_HIGH_THREAT_VALUE = 300;
-LOOT_SOURCE_GARRISON_CACHE = 10;
+
 WOW_TOKEN_ITEM_ID = 122284;
 
 -- TRANSMOG
@@ -756,27 +847,7 @@ WARDROBE_NEXT_VISUAL_KEY = "RIGHT";
 WARDROBE_UP_VISUAL_KEY = "UP";
 WARDROBE_DOWN_VISUAL_KEY = "DOWN";
 
-TRANSMOG_INVALID_CODES = {
-	"NO_ITEM",
-	"NOT_SOULBOUND",
-	"LEGENDARY",
-	"ITEM_TYPE",
-	"DESTINATION",
-	"MISMATCH",
-	"",		-- same item
-	"",		-- invalid source
-	"",		-- invalid source quality
-	"CANNOT_USE",
-	"SLOT_FOR_RACE",
-}
-
-TRANSMOG_SOURCE_BOSS_DROP = 1;
-
-FIRST_TRANSMOG_COLLECTION_WEAPON_TYPE = Enum.TransmogCollectionType.Wand + 1;
-LAST_TRANSMOG_COLLECTION_WEAPON_TYPE = Enum.TransmogCollectionTypeMeta.NumValues;
 NO_TRANSMOG_SOURCE_ID = 0;
-NO_TRANSMOG_VISUAL_ID = 0;
-REMOVE_TRANSMOG_ID = 0;
 
 -- ITEMSUBCLASSTYPES
 ITEMSUBCLASSTYPES = {
@@ -825,59 +896,8 @@ RELIC_TALENT_LINK_STYLE_ACTIVE = 3;
 RELIC_TALENT_LINK_STYLE_UPCOMING = 4;
 RELIC_TALENT_LINK_STYLE_AVAILABLE = 5;
 
--- TODO: Need to be able to expose this from client...
-Enum.ChatChannelType = {
-	None = 0,
-	Custom = 1,
-	Private_Party = 2,
-	Public_Party = 3,
-	Communities = 4,
-};
-
-CALENDAR_INVITESTATUS_INFO = {
-	["UNKNOWN"] = {
-		name		= UNKNOWN,
-		color		= NORMAL_FONT_COLOR,
-	},
-	[CALENDAR_INVITESTATUS_CONFIRMED] = {
-		name		= CALENDAR_STATUS_CONFIRMED,
-		color		= GREEN_FONT_COLOR,
-	},
-	[CALENDAR_INVITESTATUS_ACCEPTED] = {
-		name		= CALENDAR_STATUS_ACCEPTED,
-		color		= GREEN_FONT_COLOR,
-	},
-	[CALENDAR_INVITESTATUS_DECLINED] = {
-		name		= CALENDAR_STATUS_DECLINED,
-		color		= RED_FONT_COLOR,
-	},
-	[CALENDAR_INVITESTATUS_OUT] = {
-		name		= CALENDAR_STATUS_OUT,
-		color		= RED_FONT_COLOR,
-	},
-	[CALENDAR_INVITESTATUS_STANDBY] = {
-		name		= CALENDAR_STATUS_STANDBY,
-		color		= ORANGE_FONT_COLOR,
-	},
-	[CALENDAR_INVITESTATUS_INVITED] = {
-		name		= CALENDAR_STATUS_INVITED,
-		color		= NORMAL_FONT_COLOR,
-	},
-	[CALENDAR_INVITESTATUS_SIGNEDUP] = {
-		name		= CALENDAR_STATUS_SIGNEDUP,
-		color		= GREEN_FONT_COLOR,
-	},
-	[CALENDAR_INVITESTATUS_NOT_SIGNEDUP] = {
-		name		= CALENDAR_STATUS_NOT_SIGNEDUP,
-		color		= GRAY_FONT_COLOR,
-	},
-	[CALENDAR_INVITESTATUS_TENTATIVE] = {
-		name		= CALENDAR_STATUS_TENTATIVE,
-		color		= ORANGE_FONT_COLOR,
-	},
-};
-
-TOOLTIP_INDENT_OFFSET = 10;
+-- SPECTATOR MODE
+MAX_SPECTATED_PER_TEAM = 15;
 
 -- "Generic" GamePad button labels
 KEY_PADDUP				= "GamePad Up";

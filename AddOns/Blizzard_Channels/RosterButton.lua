@@ -178,7 +178,6 @@ function ChannelRosterButtonMixin:OnClick(button)
 		dropdown.channelType = channel:GetChannelType();
 		dropdown.guid = guid;
 		dropdown.isSelf = self:IsLocalPlayer();
-		dropdown.isOffline = (self:IsConnected() == false);
 		dropdown.voiceChannel = channel:GetVoiceChannel();
 		dropdown.voiceChannelID = channel:GetVoiceChannelID();
 		if dropdown.voiceChannelID and guid then
@@ -284,39 +283,15 @@ function ChannelRosterButtonMixin:UpdateNameSize()
 	end
 end
 
-function ChannelRosterButtonMixin:GetMemberChannelRank()
-	local channel = ChannelFrame:GetList():GetSelectedChannelButton();
-	if channel then
-		local ruleset, activePlayerRole = channel:GetChannelRuleset();
-		if ruleset == Enum.ChatChannelRuleset.Mentor then
-			return nil;
-		end
-	end
-
-	if self:IsMemberOwner() then
-		return "owner";
-	elseif self:IsMemberModerator() then
-		return "moderator";
-	end
-end
-
-local channelRankImages =
-{
-	owner = { asset = "Interface\\GroupFrame\\UI-Group-LeaderIcon" },
-	moderator = { asset = "Interface\\GroupFrame\\UI-Group-AssistantIcon" },
-}
-
 function ChannelRosterButtonMixin:UpdateRankVisibleState()
-	local channelRank = self:GetMemberChannelRank();
-	self.showRank = channelRank ~= nil;
+	self.showRank = self:IsMemberLeadership();
 	self.Rank:SetShown(self.showRank);
 
 	if self.showRank then
-		local rankImage = channelRankImages[channelRank];
-		if rankImage.isAtlas then
-			self.Rank:SetAtlas(rankImage.asset);
-		else
-			self.Rank:SetTexture(rankImage.asset);
+		if self:IsMemberOwner() then
+			self.Rank:SetTexture("Interface\\GroupFrame\\UI-Group-LeaderIcon");
+		elseif self:IsMemberModerator() then
+			self.Rank:SetTexture("Interface\\GroupFrame\\UI-Group-AssistantIcon");
 		end
 	end
 end

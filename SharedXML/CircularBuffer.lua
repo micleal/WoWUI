@@ -1,17 +1,3 @@
-local securecall = securecall;
-local type = type;
-local error = error;
-local CreateFromMixins = CreateFromMixins;
-
-local function safesecurecall(fn, ...)
-	if type(fn) ~= "function" then
-		error("Function lookups forbidden");
-		return;
-	end
-
-	return securecall(fn, ...);
-end
-
 CircularBufferMixin = {}
 
 function CreateCircularBuffer(maxElements)
@@ -45,10 +31,10 @@ end
 
 function CircularBufferMixin:PushFront(element)
     self.headIndex = self.headIndex + 1;
-
+    
 	local insertIndex = self.headIndex;
     self.elements[insertIndex] = element;
-
+    
     self.headIndex = self.headIndex % self.maxElements;
 
 	return insertIndex;
@@ -82,7 +68,7 @@ function CircularBufferMixin:RemoveIf(predicateFunction, transformFunction)
 	transformFunction = transformFunction or PassThrough;
 	local elements = {};
 	for i, entry in self:EnumerateIndexedEntries() do
-		if not safesecurecall(predicateFunction, safesecurecall(transformFunction, entry)) then
+		if not securecall(predicateFunction, securecall(transformFunction, entry)) then
 			elements[#elements + 1] = entry;
 		end
 	end
@@ -99,8 +85,8 @@ function CircularBufferMixin:TransformIf(predicateFunction, transformFunction, e
 
 	entryTransform = entryTransform or PassThrough;
 	for i, entry in ipairs(self.elements) do
-		if safesecurecall(predicateFunction, safesecurecall(entryTransform, entry)) then
-			self.elements[i] = safesecurecall(transformFunction, safesecurecall(entryTransform, entry));
+		if securecall(predicateFunction, securecall(entryTransform, entry)) then
+			self.elements[i] = securecall(transformFunction, securecall(entryTransform, entry));
 			changed = true;
 		end
 	end

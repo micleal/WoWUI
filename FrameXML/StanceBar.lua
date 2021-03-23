@@ -16,10 +16,10 @@ function StanceBar_OnEvent(self, event)
 	end
 end
 
-function StanceBar_Update()
+function StanceBar_Update ()
 	local numForms = GetNumShapeshiftForms();
 	local needFrameMgrUpdate = false;
-	if ( numForms > 0 and not IsPossessBarVisible()) then
+	if ( numForms > 0 ) then
 		if ( StanceBarFrame.numForms ~= numForms ) then
 			--Setup the Stance bar to display the appropriate number of slots
 			if ( numForms == 1 ) then
@@ -97,13 +97,13 @@ function StanceBar_UpdateState ()
 	end
 end
 
-function StanceBar_Select(id)
+function StanceBar_Select (id)
 	StanceBarFrame.lastSelected = id;
 	CastShapeshiftForm(id);
 end
 
 function StanceButton_OnEnter(self)
-	if ( GetCVarBool("UberTooltips") or KeybindFrames_InQuickKeybindMode() ) then
+	if ( GetCVarBool("UberTooltips") ) then
 		GameTooltip_SetDefaultAnchor(GameTooltip, self);
 	else
 		GameTooltip:SetOwner(self, "ANCHOR_RIGHT");

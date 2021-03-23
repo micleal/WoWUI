@@ -1,5 +1,3 @@
-local LOCAL_CHECK_Frame = CreateFrame("Frame");
-
 -- The "modified attribute" takes the form of: modifier-name-button
 -- The modifier is one of "shift-", "ctrl-", "alt-", and the button is a number from 1 through 5.
 --
@@ -61,7 +59,7 @@ end
 function SecureButton_GetModifierPrefix(frame)
     -- Handle optional frame modifiers attribute
     if ( frame ) then
-        local modlist = LOCAL_CHECK_Frame.GetAttribute(frame, "modifiers");
+        local modlist = frame:GetAttribute("modifiers");
         if ( modlist ) then
             local prefix = SecureButton_ParseModifierString(modlist);
             if ( prefix ) then
@@ -114,10 +112,10 @@ function SecureButton_GetModifiedAttribute(frame, name, button, prefix, suffix)
     if ( not suffix ) then
         suffix = SecureButton_GetButtonSuffix(button);
     end
-    local value = LOCAL_CHECK_Frame.GetAttribute(frame, prefix, name, suffix);
-    if ( not value and (LOCAL_CHECK_Frame.GetAttribute(frame, "useparent-"..name) or
-                        LOCAL_CHECK_Frame.GetAttribute(frame, "useparent*")) ) then
-        local parent = LOCAL_CHECK_Frame.GetParent(frame);
+    local value = frame:GetAttribute(prefix, name, suffix);
+    if ( not value and (frame:GetAttribute("useparent-"..name) or
+                        frame:GetAttribute("useparent*")) ) then
+        local parent = frame:GetParent();
         if ( parent ) then
             value = SecureButton_GetModifiedAttribute(parent, name, button, prefix, suffix);
         end
@@ -142,7 +140,7 @@ function SecureButton_GetModifiedUnit(self, button)
                         unit = gsub(unit, "^[pP][lL][aA][yY][eE][rR][pP][eE][tT]", "pet");
                 end
 
-                local noPet, hadPet = unit:gsub("[pP][eE][tT](%d)", "%1");
+                --[[local noPet, hadPet = unit:gsub("[pP][eE][tT](%d)", "%1");
                 if ( hadPet == 0 ) then
                         noPet, hadPet = unit:gsub("^[pP][eE][tT]", "player");
                 end
@@ -160,7 +158,7 @@ function SecureButton_GetModifiedUnit(self, button)
                         elseif ( (hadTarget == 0) or SecureButton_GetModifiedAttribute(self, "allowVehicleTarget", button) ) then
                                 unit = unit:gsub("^[pP][lL][aA][yY][eE][rR]", "pet"):gsub("^([%a]+)([%d]+)", "%1pet%2");
                         end
-                end
+                end]]
 
                 return unit;
         end
@@ -218,8 +216,6 @@ local InitializeSecureMenu = function(self)
 		menu = "VEHICLE";
 	elseif( UnitIsUnit(unit, "pet") ) then
 		menu = "PET";
-	elseif( UnitIsOtherPlayersBattlePet(unit) ) then
-		menu = "OTHERBATTLEPET";
 	elseif( UnitIsOtherPlayersPet(unit) ) then
 		menu = "OTHERPET";
 	-- Last ditch checks
@@ -331,7 +327,7 @@ SECURE_ACTIONS.actionbar =
 
 SECURE_ACTIONS.action =
     function (self, unit, button)
-        local action = self:CalculateAction(button);
+        local action = ActionButton_CalculateAction(self, button);
         if ( action ) then
             -- Save macros in case the one for this action is being edited
             securecall("MacroFrame_SaveMacro");
@@ -339,13 +335,7 @@ SECURE_ACTIONS.action =
             local actionType, flyoutId = GetActionInfo(action);
             local cursorType = GetCursorInfo();
 
-            if ( actionType == "flyout" and not cursorType ) then
-				local direction = SecureButton_GetModifiedAttribute(self, "flyoutDirection", button);
-                SpellFlyout:Toggle(flyoutId, self, direction, 3, true);
-            else
-                SpellFlyout:Hide();
-                UseAction(action, unit, button);
-            end
+			UseAction(action, unit, button);
         end
     end;
 
@@ -367,7 +357,7 @@ SECURE_ACTIONS.flyout =
 
 SECURE_ACTIONS.multispell =
     function (self, unit, button)
-        local action = self:CalculateAction(button);
+        local action = ActionButton_CalculateAction(self, button);
         local spell = SecureButton_GetModifiedAttribute(self, "spell", button);
         if ( action and spell ) then
             SetMultiCastSpell(action, tonumber(spell) or spell);
@@ -418,16 +408,7 @@ SECURE_ACTIONS.item =
             end
         end
     end;
-	
-SECURE_ACTIONS.equipmentset =
-	function (self, unit, button)
-		local setName = SecureButton_GetModifiedAttribute(self, "equipmentset", button);
-		local setID = setName and C_EquipmentSet.GetEquipmentSetID(setName);
-		if ( setID ) then
-			C_EquipmentSet.UseEquipmentSet(setID);
-		end
-	end;
-	
+
 SECURE_ACTIONS.macro =
     function (self, unit, button)
         local macro = SecureButton_GetModifiedAttribute(self, "macro", button);
@@ -448,6 +429,7 @@ SECURE_ACTIONS.macro =
 local CANCELABLE_ITEMS = {
     [GetInventorySlotInfo("MainHandSlot")] = 1, -- main hand slot
     [GetInventorySlotInfo("SecondaryHandSlot")] = 2, -- off-hand slot
+	[GetInventorySlotInfo("RangedSlot")] = 3 -- ranged slot
 };
 
 SECURE_ACTIONS.cancelaura =
@@ -578,28 +560,6 @@ SECURE_ACTIONS.worldmarker =
 			end
 		end
 	end;
-
- SecureActionButtonMixin = {};
-
-function SecureActionButtonMixin:CalculateAction(button)
-    if ( not button ) then
-        button = SecureButton_GetEffectiveButton(self);
-    end
-    if ( self:GetID() > 0 ) then
-        local page = SecureButton_GetModifiedAttribute(self, "actionpage", button);
-        if ( not page ) then
-            page = GetActionBarPage();
-            if ( self.isExtra ) then
-                page = GetExtraBarIndex();
-            elseif ( self.buttonType == "MULTICASTACTIONBUTTON" ) then
-                page = GetMultiCastBarIndex();
-            end
-        end
-        return (self:GetID() + ((page - 1) * NUM_ACTIONBAR_BUTTONS));
-    else
-        return SecureButton_GetModifiedAttribute(self, "action", button) or 1;
-    end
-end
 
 function SecureActionButton_OnClick(self, button, down)
     -- TODO check with Tom etc if this is kosher

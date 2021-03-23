@@ -22,6 +22,16 @@ function TexelSnappingVisualizerMixin:OnCreated()
 	self:SetClampedToScreen(true);
 	self:SetMovable(true);
 
+	self:SetBackdrop({
+		bgFile = "Interface/Tooltips/UI-Tooltip-Background",
+		edgeFile = "Interface/Tooltips/UI-Tooltip-Border",
+		tile = true,
+		tileEdge = true,
+		tileSize = 16,
+		edgeSize = 16,
+		insets = { left = 4, right = 4, top = 4, bottom = 4 },
+	});
+
 	self:SetBackdropColor(0, 0, 0);
 
 	do
@@ -92,12 +102,6 @@ function TexelSnappingVisualizerMixin:OnCreated()
 			forceOffTick:SetSize(2, 16);
 			forceOffTick:SetPoint("CENTER", texelSnappingSlider, "CENTER", texelSnappingSlider:GetWidth() * MIN_VALUE, 0);
 		end
-	end
-
-	do
-		local closeButton = CreateFrame("BUTTON", nil, self, "UIPanelCloseButton");
-		closeButton:SetPoint("TOPRIGHT", -5, -5);
-		closeButton:SetScript("OnClick", function() self:Hide() end);
 	end
 end
 

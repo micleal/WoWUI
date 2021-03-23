@@ -267,7 +267,10 @@
 					</OnDragStop>
 				</Scripts>
 			</Button>
-			<ScrollFrame parentKey="LinesScrollFrame" inherits="UIPanelScrollFrameTemplate">
+			<ScrollFrame parentKey="LinesScrollFrame" inherits="UIPanelScrollFrameTemplate, BackdropTemplate">
+				<KeyValues>
+					<KeyValue key="backdropBorderColor" value="LIGHTGRAY_FONT_COLOR" type="global"/>
+				</KeyValues>
 				<Size x="430" y="300"/>
 				<Anchors>
 					<Anchor point="TOPLEFT" x="20" y="-70"/>
@@ -289,7 +292,10 @@
 					</Frame>
 				</ScrollChild>
 			</ScrollFrame>
-			<Frame parentKey="ScrollFrameArt" inherits="TooltipBorderBackdropTemplate">
+			<Frame parentKey="ScrollFrameArt" inherits="BackdropTemplate">
+				<KeyValues>
+					<KeyValue key="backdropInfo" value="BACKDROP_TOOLTIP_0_16" type="global"/>
+				</KeyValues>
 				<Anchors>
 					<Anchor point="TOPLEFT" relativeKey="$parent.LinesScrollFrame" x="0" y="6"/>
 					<Anchor point="BOTTOMRIGHT" relativeKey="$parent.LinesScrollFrame.ScrollBar" x="6" y="-22"/>

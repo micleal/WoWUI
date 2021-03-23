@@ -47,7 +47,7 @@
 			</Layer>
 		</Layers>
 		<Frames>
-			<Frame parentKey="TooltipFrame" frameStrata="TOOLTIP" clampedToScreen="true" hidden="true" inherits="TooltipBackdropTemplate">
+			<Frame parentKey="TooltipFrame" inherits="TooltipBackdropTemplate" frameStrata="TOOLTIP" clampedToScreen="true" hidden="true">
 				<Size x="250" y="60"/>
 				<Anchors>
 					<Anchor point="BOTTOMLEFT" relativePoint="TOPRIGHT"/>
@@ -72,7 +72,7 @@
 			</Frame>
 		</Frames>
 		<Scripts>
-			<OnLoad inherit="prepend" method="OnLoad"/>
+			<OnLoad method="OnLoad"/>
 			<OnEvent method="OnEvent"/>
 			<OnHide method="OnHide"/>
 
@@ -97,7 +97,7 @@
 			</Layer>
 		</Layers>
 		<Scripts>
-			<OnLoad inherit="prepend" method="OnLoad"/>
+			<OnLoad method="OnLoad"/>
 			<OnEvent method="OnEvent"/>
 			<OnUpdate method="OnUpdate"/>
 		</Scripts>

@@ -1,3 +1,11 @@
+BACKDROP_TOOLTIP_32_13 = {
+	bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
+	edgeFile = "Interface\\Glues\\Common\\Glue-Tooltip-Border",
+	tile = true,
+	tileEdge = true,
+	tileSize = 32,
+	edgeSize = 13,
+};
 
 BACKDROP_TOOLTIP_8_8_1111 = {
 	bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
@@ -83,6 +91,22 @@ BACKDROP_DIALOG_32_32 = {
 	tileSize = 32,
 	edgeSize = 32,
 	insets = { left = 11, right = 12, top = 12, bottom = 11 },
+};
+
+BACKDROP_DARK_DIALOG_32_32 = {
+	bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background-Dark",
+	edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
+	tile = true,
+	tileEdge = true,
+	tileSize = 32,
+	edgeSize = 32,
+	insets = { left = 11, right = 12, top = 12, bottom = 11 },
+};
+
+BACKDROP_DIALOG_EDGE_32  = {
+	edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
+	tileEdge = true,
+	edgeSize = 32,
 };
 
 BACKDROP_GOLD_DIALOG_32_32 = {
@@ -173,6 +197,26 @@ BACKDROP_TEXT_PANEL_0_16 = {
 	edgeFile = "Interface\\Glues\\Common\\TextPanel-Border",
 	tileEdge = true,
 	edgeSize = 16,
+};
+
+BACKDROP_CHARACTER_CREATE_TOOLTIP_32_32 = {
+	bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
+	edgeFile = "Interface\\Glues\\Common\\TextPanel-Border",
+	tile = true,
+	tileEdge = true,
+	tileSize = 32,
+	edgeSize = 32,
+	insets = { left = 8, right = 4, top = 4, bottom = 8 },
+};
+
+BACKDROP_TUTORIAL_16_16 = {
+	bgFile = "Interface\\TutorialFrame\\TutorialFrameBackground",
+	edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+	tile = true,
+	tileEdge = true,
+	tileSize = 16,
+	edgeSize = 16,
+	insets = { left = 3, right = 5, top = 3, bottom = 5 },
 };
 
 BackdropTemplateMixin = { };

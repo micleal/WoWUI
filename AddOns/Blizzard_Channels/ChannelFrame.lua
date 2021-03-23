@@ -1,19 +1,11 @@
 UIPanelWindows["ChannelFrame"] = { area = "left", pushable = 1, whileDead = 1 };
 
-ChannelFrameMixin = CreateFromMixins();
+ChannelFrameMixin = CreateFromMixins(EventRegistrationHelper);
 
 do
 	local dirtyFlags = {
 		UpdateChannelList = 1,
 		UpdateRoster = 2,
-	};
-
-	local dynamicEvents = {
-		"PARTY_LEADER_CHANGED",
-		"GROUP_ROSTER_UPDATE",
-		"CHANNEL_UI_UPDATE",
-		"CHANNEL_LEFT",
-		"CHAT_MSG_CHANNEL_NOTICE_USER",
 	};
 
 	function ChannelFrameMixin:OnLoad()
@@ -54,8 +46,8 @@ do
 		self:RegisterEvent("VOICE_CHAT_CHANNEL_MEMBER_MUTE_FOR_ME_CHANGED");
 		self:RegisterEvent("VOICE_CHAT_CHANNEL_MEMBER_ADDED");
 		self:RegisterEvent("VOICE_CHAT_CHANNEL_MEMBER_GUID_UPDATED");
-		self:RegisterEvent("CHAT_MSG_CHANNEL_LEAVE_PREVENTED");
-		self:RegisterEvent("CHAT_MSG_CHANNEL_NOTICE");
+
+		self:AddEvents("PARTY_LEADER_CHANGED", "GROUP_ROSTER_UPDATE", "CHANNEL_UI_UPDATE", "CHANNEL_LEFT", "CHAT_MSG_CHANNEL_NOTICE_USER");
 
 		local promptSubSystem = ChatAlertFrame:AddAutoAnchoredSubSystem(VoiceChatPromptActivateChannel);
 		ChatAlertFrame:SetSubSystemAnchorPriority(promptSubSystem, 10);
@@ -63,31 +55,30 @@ do
 		local notificationSubSystem = ChatAlertFrame:AddAutoAnchoredSubSystem(VoiceChatChannelActivatedNotification);
 		ChatAlertFrame:SetSubSystemAnchorPriority(notificationSubSystem, 11);
 	end
+end
 
-	function ChannelFrameMixin:OnShow()
-		-- Don't allow ChannelFrame and CommunitiesFrame to show at the same time, because they share one presence subscription
-		if CommunitiesFrame and CommunitiesFrame:IsShown() then
-			HideUIPanel(CommunitiesFrame);
-		end
-
-		ChatFrameChannelButton:HideTutorial();
-
-		local channel = self:GetList():GetSelectedChannelButton();
-		if channel and channel:ChannelIsCommunity() then
-			C_Club.SetClubPresenceSubscription(channel.clubId);
-		end
-
-		FrameUtil.RegisterFrameForEvents(self, dynamicEvents);
-		self:MarkDirty("UpdateAll");
-		self:MarkDirty("CheckShowTutorial");
+function ChannelFrameMixin:OnShow()
+	-- Don't allow ChannelFrame and CommunitiesFrame to show at the same time, because they share one presence subscription
+	if CommunitiesFrame and CommunitiesFrame:IsShown() then
+		HideUIPanel(CommunitiesFrame);
 	end
 
-	function ChannelFrameMixin:OnHide()
-		C_Club.ClearClubPresenceSubscription();
+	ChatFrameChannelButton:HideTutorial();
 
-		FrameUtil.UnregisterFrameForEvents(self, dynamicEvents);
-		StaticPopupSpecial_Hide(CreateChannelPopup);
+	local channel = self:GetList():GetSelectedChannelButton();
+	if channel and channel:ChannelIsCommunity() then
+		C_Club.SetClubPresenceSubscription(channel.clubId);
 	end
+
+	self:SetEventsRegistered(true);
+	self:MarkDirty("UpdateAll");
+end
+
+function ChannelFrameMixin:OnHide()
+	C_Club.ClearClubPresenceSubscription();
+
+	self:SetEventsRegistered(false);
+	StaticPopupSpecial_Hide(CreateChannelPopup);
 end
 
 function ChannelFrameMixin:OnEvent(event, ...)
@@ -160,14 +151,6 @@ function ChannelFrameMixin:OnEvent(event, ...)
 		self:UpdateVoiceChannelIfSelected(select(2,...));
 	elseif event == "VOICE_CHAT_CHANNEL_MEMBER_GUID_UPDATED" then
 		self:UpdateVoiceChannelIfSelected(select(2,...));
-	elseif event == "CHAT_MSG_CHANNEL_LEAVE_PREVENTED" then
-		self:OnChannelLeavePrevented(...)
-	elseif event == "CHAT_REGIONAL_STATUS_CHANGED" then
-		self:MarkDirty("UpdateChannelList");
-	elseif event == "CHAT_MSG_CHANNEL_NOTICE" then
-		self:OnChannelNotice(...);
-	elseif event == "MENTORSHIP_STATUS_CHANGED" then
-		self:OnMentorshipStatusChanged();
 	end
 end
 
@@ -225,25 +208,20 @@ function ChannelFrameMixin:CheckShowTutorial()
 		local channels = self:GetList();
 		local channelButton = channels:GetButtonForAnyVoiceChannel();
 		if channelButton then
-			local helpTipInfo = {
-				text = TUTORIAL_VOICE,
-				buttonStyle = HelpTip.ButtonStyle.Close,
-				cvarBitfield = "closedInfoFrames",
-				bitfieldFlag = LE_FRAME_TUTORIAL_CHAT_CHANNELS,
-				targetPoint = HelpTip.Point.RightEdgeCenter,
-				offsetX = -4,
-			};
-			HelpTip:Show(self, helpTipInfo, channelButton);
+			self.Tutorial:ClearAllPoints();
+			self.Tutorial:SetPoint("LEFT", channelButton, "RIGHT", 20, -1);
+			self.Tutorial:Show();
 		end
 	end
 end
 
 function ChannelFrameMixin:HideTutorial()
-	HelpTip:Hide(self, TUTORIAL_VOICE);
+	self.Tutorial:Hide();
 end
 
 function ChannelFrameMixin:ShouldShowTutorial()
-	return UnitLevel("player") >= 10 and not GetCVarBitfield("closedInfoFrames", LE_FRAME_TUTORIAL_CHAT_CHANNELS);
+	return false; -- Disabling this modern-style tutorial for Classic.
+	--return UnitLevel("player") >= 10 and not GetCVarBitfield("closedInfoFrames", LE_FRAME_TUTORIAL_CHAT_CHANNELS);
 end
 
 function ChannelFrameMixin:TryCreateVoiceChannel(channelName)
@@ -544,7 +522,7 @@ end
 
 function ChannelFrameMixin:OnCountUpdate(id, count)
 	local name, header, collapsed, channelNumber, count, active, category, channelType = GetChannelDisplayInfo(id);
-	if ChannelFrame_IsCategoryGroup(category) and count then
+	if self:IsCategoryGroup(category) and count then
 		local channelButton = self:GetList():GetButtonForTextChannelID(id);
 		if channelButton then
 			channelButton:SetMemberCount(count);
@@ -631,43 +609,16 @@ function ChannelFrameMixin:OnUserSelectedChannel()
 	self:MarkDirty("UpdateRoster");
 end
 
-function ChannelFrameMixin:OnChannelLeavePrevented(channelName)
-	ChatFrame_DisplaySystemMessageInPrimary(CHAT_LEAVE_CHANNEL_PREVENTED:format(channelName));
+function ChannelFrameMixin:IsCategoryGlobal(category)
+	return category == "CHANNEL_CATEGORY_WORLD";
 end
 
-function ChannelFrameMixin:OnChannelNotice(...)
-	local eventType = select(1, ...);
-	local channelIndex = select(8, ...);
-
-	if eventType == "YOU_CHANGED" and C_ChatInfo.GetChannelRuleset(channelIndex) == Enum.ChatChannelRuleset.Mentor then
-		self:CheckNewcomerChannelJoin(channelIndex);
-	end
+function ChannelFrameMixin:IsCategoryGroup(category)
+	return category == "CHANNEL_CATEGORY_GROUP";
 end
 
-function ChannelFrameMixin:OnMentorshipStatusChanged()
-	if self.pendingNewcomerChannelIndex then
-		local channelIndex = self.pendingNewcomerChannelIndex;
-		self.pendingNewcomerChannelIndex = nil;
-		self:UnregisterEvent("MENTORSHIP_STATUS_CHANGED");
-		self:CheckNewcomerChannelJoin(channelIndex);
-	end
-end
-
-function ChannelFrameMixin:CheckNewcomerChannelJoin(channelIndex)
-	local channelSlashCommand = GetSlashCommandForChannelOpenChat(channelIndex);
-
-	if IsActivePlayerNewcomer() then
-		ChatFrame_DisplaySystemMessageInPrimary(NPEV2_CHAT_WELCOME_TO_CHANNEL_NEWCOMER:format(channelSlashCommand));
-		ChatFrame_DisplaySystemMessageInPrimary(NPEV2_CHAT_WELCOME_TO_CHANNEL_NEWCOMER1:format(channelSlashCommand));
-		ChatFrame_DisplaySystemMessageInPrimary(NPEV2_CHAT_WELCOME_TO_CHANNEL_NEWCOMER2:format(channelSlashCommand));
-	elseif IsActivePlayerGuide() then
-		-- NOTE: Guide flags won't be set at this point if the user is joining from the NPC, assume that if the channel join is happening,
-		-- then if you're not a newcomer, you must be a guide.
-		ChatFrame_DisplaySystemMessageInPrimary(NPEV2_CHAT_WELCOME_TO_CHANNEL_GUIDE:format(channelSlashCommand));
-	else
-		self.pendingNewcomerChannelIndex = channelIndex;
-		self:RegisterEvent("MENTORSHIP_STATUS_CHANGED");
-	end
+function ChannelFrameMixin:IsCategoryCustom(category)
+	return category == "CHANNEL_CATEGORY_CUSTOM";
 end
 
 --[ Utility Functions ]--
@@ -680,8 +631,8 @@ end
 
 local channelTypeToNameLookup =
 {
-	[Enum.ChatChannelType.Private_Party] = VOICE_CHANNEL_NAME_PARTY,
-	[Enum.ChatChannelType.Public_Party] = VOICE_CHANNEL_NAME_INSTANCE,
+	[Enum.ChatChannelType.PrivateParty] = VOICE_CHANNEL_NAME_PARTY,
+	[Enum.ChatChannelType.PublicParty] = VOICE_CHANNEL_NAME_INSTANCE,
 };
 
 function ChannelFrame_GetIdealChannelName(channel)
@@ -690,16 +641,4 @@ function ChannelFrame_GetIdealChannelName(channel)
 	end
 
 	return channel.name or "";
-end
-
-function ChannelFrame_IsCategoryGlobal(category)
-	return category == "CHANNEL_CATEGORY_WORLD";
-end
-
-function ChannelFrame_IsCategoryGroup(category)
-	return category == "CHANNEL_CATEGORY_GROUP";
-end
-
-function ChannelFrame_IsCategoryCustom(category)
-	return category == "CHANNEL_CATEGORY_CUSTOM";
 end

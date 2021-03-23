@@ -4,64 +4,35 @@
 
 	<EditBox name="InputBoxScriptTemplate" enableMouse="true" virtual="true">
 		<Scripts>
-			<OnTabPressed function="EditBox_OnTabPressed"/>
 			<OnEscapePressed function="EditBox_ClearFocus"/>
 			<OnEditFocusLost function="EditBox_ClearHighlight"/>
 			<OnEditFocusGained function="EditBox_HighlightText"/>
 		</Scripts>
 	</EditBox>
-	
-	<EditBox name="LargeInputBoxTemplate" inherits="InputBoxScriptTemplate" virtual="true">
-		<Size x="110" y="33"/>
-		<Layers>
-			<Layer level="BACKGROUND">
-				<Texture parentKey="Left" atlas="auctionhouse-ui-inputfield-left" useAtlasSize="true">
-					<Anchors>
-						<Anchor point="LEFT"/>
-					</Anchors>
-				</Texture>
-				<Texture parentKey="Right" atlas="auctionhouse-ui-inputfield-right" useAtlasSize="true">
-					<Anchors>
-						<Anchor point="RIGHT"/>
-					</Anchors>
-				</Texture>
-				<Texture parentKey="Middle" atlas="auctionhouse-ui-inputfield-middle">
-					<Anchors>
-						<Anchor point="TOPLEFT" relativeKey="$parent.Left" relativePoint="TOPRIGHT"/>
-						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.Right" relativePoint="BOTTOMLEFT"/>
-					</Anchors>
-				</Texture>
-			</Layer>
-		</Layers>
-		<FontString inherits="NumberFont_Normal_Med">
-			<Anchors>
-				<Anchor point="LEFT" x="6" y="0"/>
-			</Anchors>
-		</FontString>
-		<TextInsets left="10" right="10" bottom="5" top="0"/>
-	</EditBox>
-
 	<EditBox name="InputBoxTemplate" inherits="InputBoxScriptTemplate" virtual="true">
 		<Layers>
 			<Layer level="BACKGROUND">
-				<Texture parentKey="Left" atlas="common-search-border-left" useAtlasSize="false">
+				<Texture parentKey="Left" file="Interface\Common\Common-Input-Border">
 					<Size x="8" y="20"/>
 					<Anchors>
 						<Anchor point="LEFT" x="-5" y="0"/>
 					</Anchors>
+					<TexCoords left="0" right="0.0625" top="0" bottom="0.625"/>
 				</Texture>
-				<Texture parentKey="Right" atlas="common-search-border-right">
+				<Texture parentKey="Right" file="Interface\Common\Common-Input-Border">
 					<Size x="8" y="20"/>
 					<Anchors>
 						<Anchor point="RIGHT" x="0" y="0"/>
 					</Anchors>
+					<TexCoords left="0.9375" right="1.0" top="0" bottom="0.625"/>
 				</Texture>
-				<Texture parentKey="Middle" atlas="common-search-border-middle">
+				<Texture parentKey="Middle" file="Interface\Common\Common-Input-Border">
 					<Size x="10" y="20"/>
 					<Anchors>
 						<Anchor point="LEFT" relativeKey="$parent.Left" relativePoint="RIGHT"/>
 						<Anchor point="RIGHT" relativeKey="$parent.Right" relativePoint="LEFT"/>
 					</Anchors>
+					<TexCoords left="0.0625" right="0.9375" top="0" bottom="0.625"/>
 				</Texture>
 			</Layer>
 		</Layers>
@@ -399,15 +370,6 @@
 		</Frames>
 	</Frame>
 
-	<!--
-	*******************************************************************************
-	   Secure Frame border elements
-		This cannot be themed, would be ideal if it could leverage code, but since it's
-		used in forbidden/protected/restricted frames, the entire theme for the
-		standard dialog is just manually written here, keep this up to date
-		with other script using the dialog border.
-	*******************************************************************************
-	-->
 	<Frame name="SecureDialogBorderNoCenterTemplate" frameLevel="500" setAllPoints="true" useParentLevel="true" virtual="true">
 		<Layers>
 			<Layer level="BACKGROUND">
@@ -500,6 +462,4 @@
 			</Layer>
 		</Layers>
 	</Frame>
-
-
 </Ui>

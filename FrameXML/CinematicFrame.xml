@@ -46,16 +46,19 @@
 				</Texture>
 			</Layer>
 			<Layer level="OVERLAY">
-				<FontString parentKey="Subtitle1" parentArray="Subtitles" inherits="GameFontHighlightLarge" justifyH="CENTER" justifyV="TOP" hidden="true" mixin="ShrinkUntilTruncateFontStringMixin">
+				<FontString parentKey="Subtitle1" parentArray="Subtitles" inherits="GameFontHighlightLarge" justifyH="CENTER" justifyV="MIDDLE" hidden="true" mixin="ShrinkUntilTruncateFontStringMixin">
 					<Anchors>
-						<Anchor point="TOPLEFT" relativeKey="$parent.LowerBlackBar" x="100" y="-5"/>
-						<Anchor point="BOTTOMRIGHT" x="-100" y="5"/>
+						<Anchor point="BOTTOMLEFT" x="100" y="20"/>
+						<Anchor point="BOTTOMRIGHT" x="-100" y="20"/>
 					</Anchors>
 				</FontString>
 			</Layer>
 		</Layers>
 		<Frames>
-			<Frame name="$parentRaidBossEmoteFrame" inherits="RaidBossEmoteFrameTemplate" parentKey="raidBossEmoteFrame">
+			<Frame name="$parentRaidBossEmoteFrame" inherits="RaidBossEmoteFrameTemplate, BackdropTemplate" parentKey="raidBossEmoteFrame">
+				<KeyValues>
+					<KeyValue key="backdropInfo" value="BACKDROP_DIALOG_32_32" type="global"/>
+				</KeyValues>
 				<Anchors>
 					<Anchor point="TOP" x="0" y="-20"/>
 				</Anchors>
@@ -82,7 +85,6 @@
 					</Layer>
 				</Layers>
 				<Frames>
-					<Frame parentKey="Border" inherits="DialogBorderTemplate"/>
 					<Button name="$parentConfirmButton" inherits="CinematicDialogButtonTemplate" text="YES">
 						<Anchors>
 							<Anchor point="BOTTOMRIGHT" relativeTo="$parent" relativePoint="BOTTOM" x="-6" y="16"/>
@@ -91,7 +93,7 @@
 							<OnClick>
 								CinematicFrame_CancelCinematic();
 							</OnClick>
-						</Scripts>
+						</Scripts>	
 					</Button>
 					<Button name="$parentResumeButton" inherits="CinematicDialogButtonTemplate" text="NO">
 						<Anchors>
@@ -101,7 +103,7 @@
 							<OnClick>
 								self:GetParent():Hide();
 							</OnClick>
-						</Scripts>
+						</Scripts>	
 					</Button>
 				</Frames>
 				<Scripts>
@@ -117,9 +119,9 @@
 		<Scripts>
 			<OnLoad function="CinematicFrame_OnLoad"/>
 			<OnShow function="CinematicFrame_OnShow"/>
-			<OnHide function="CinematicFrame_OnHide"/>
 			<OnEvent function="CinematicFrame_OnEvent"/>
 			<OnKeyDown function="CinematicFrame_OnKeyDown"/>
+			<OnGamePadButtonDown function="CinematicFrame_OnKeyDown"/>
 		</Scripts>
 	</Frame>
 </Ui>

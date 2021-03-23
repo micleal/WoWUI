@@ -3,32 +3,8 @@
 	<Frame name="UIWidgetManager" toplevel="true" mixin="UIWidgetManagerMixin">
 		<Scripts>
 			<OnLoad method="OnLoad"/>
-		</Scripts>
-	</Frame>
-
-	<Frame name="UIWidgetHorizontalWidgetContainerTemplate" inherits="ResizeLayoutFrame" virtual="true">
-		<Anchors>
-			<Anchor point="CENTER"/>
-		</Anchors>
-	</Frame>
-
-	<Frame name="UIWidgetContainerNoResizeTemplate" virtual="true" mixin="UIWidgetContainerMixin">
-		<Size x="1" y="1"/>
-		<KeyValues>
-			<KeyValue key="showAndHideOnWidgetSetRegistration" value="true" type="boolean"/>
-			<KeyValue key="verticalAnchorPoint" value="TOP" type="string"/>
-			<KeyValue key="verticalRelativePoint" value="BOTTOM" type="string"/>
-			<KeyValue key="horizontalAnchorPoint" value="LEFT" type="string"/>
-			<KeyValue key="horizontalRelativePoint" value="RIGHT" type="string"/>
-			<KeyValue key="horizontalAnchorXOffset" value="2" type="number"/>
-		</KeyValues>
-		<Scripts>
-			<OnLoad method="OnLoad"/>
 			<OnEvent method="OnEvent"/>
 			<OnUpdate method="OnUpdate"/>
 		</Scripts>
 	</Frame>
-
-
-	<Frame name="UIWidgetContainerTemplate" virtual="true" inherits="UIWidgetContainerNoResizeTemplate, ResizeLayoutFrame" mixin="UIWidgetContainerMixin"/>
 </Ui>

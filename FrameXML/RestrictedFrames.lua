@@ -49,11 +49,11 @@ local HANDLE = {};
 local LOCAL_CHECK_Frame = CreateFrame("Frame");
 
 local function CheckForbidden(frame)
-	return LOCAL_CHECK_Frame.IsForbidden(frame);
+	return LOCAL_CHECK_Frame.IsForbidden(frame); 
 end
 
 local function MakeForbidden(frame)
-	LOCAL_CHECK_Frame.SetForbidden(frame);
+	LOCAL_CHECK_Frame.SetForbidden(frame); 
 end
 
 ---------------------------------------------------------------------------
@@ -76,7 +76,7 @@ end
 local function GetPossiblyForbiddenHandleFrame(handle)
     local frame, isProtected = GetFrameHandleFrame(handle);
     if (frame and (isProtected
-                   or (LOCAL_CHECK_Frame.IsProtected(frame) or not InCombatLockdown()))) then
+                   or (frame:IsProtected() or not InCombatLockdown()))) then
         return frame;
     end
     error("Invalid frame handle");
@@ -99,51 +99,43 @@ end
 ---------------------------------------------------------------------------
 -- "GETTER" methods
 
-function HANDLE:GetName()   return LOCAL_CHECK_Frame.GetName(GetUnprotectedHandleFrame(self)) end
+function HANDLE:GetName()   return GetUnprotectedHandleFrame(self):GetName() end
 
-function HANDLE:GetID()     return LOCAL_CHECK_Frame.GetID(GetHandleFrame(self));     end
-function HANDLE:IsShown()   return LOCAL_CHECK_Frame.IsShown(GetHandleFrame(self));   end
-function HANDLE:IsVisible() return LOCAL_CHECK_Frame.IsVisible(GetHandleFrame(self)); end
-function HANDLE:GetWidth()  return LOCAL_CHECK_Frame.GetWidth(GetHandleFrame(self));  end
-function HANDLE:GetHeight() return LOCAL_CHECK_Frame.GetHeight(GetHandleFrame(self)); end
-function HANDLE:GetScale()  return LOCAL_CHECK_Frame.GetScale(GetHandleFrame(self));  end
+function HANDLE:GetID()     return GetHandleFrame(self):GetID()     end
+function HANDLE:IsShown()   return GetHandleFrame(self):IsShown()   end
+function HANDLE:IsVisible() return GetHandleFrame(self):IsVisible() end
+function HANDLE:GetWidth()  return GetHandleFrame(self):GetWidth()  end
+function HANDLE:GetHeight() return GetHandleFrame(self):GetHeight() end
+function HANDLE:GetRect()   return GetHandleFrame(self):GetRect() end
+function HANDLE:GetScale()  return GetHandleFrame(self):GetScale()  end
 function HANDLE:GetEffectiveScale()
-    return LOCAL_CHECK_Frame.GetEffectiveScale(GetHandleFrame(self))
-end
-
-function HANDLE:GetRect()
-	local frame = GetHandleFrame(self);
-	if LOCAL_CHECK_Frame.IsAnchoringRestricted(frame) then
-		return nil;
-	end
-
-	return LOCAL_CHECK_Frame.GetRect(frame);
+    return GetHandleFrame(self):GetEffectiveScale()
 end
 
 -- Cannot expose GetAlpha since alpha is not protected
 
 function HANDLE:GetFrameLevel()
-    return LOCAL_CHECK_Frame.GetFrameLevel(GetHandleFrame(self));
+    return GetHandleFrame(self):GetFrameLevel()
 end
 
 function HANDLE:GetFrameStrata()
-    return LOCAL_CHECK_Frame.GetFrameStrata(GetHandleFrame(self));
+    return GetHandleFrame(self):GetFrameStrata()
 end
 
 function HANDLE:IsMouseEnabled()
-    return LOCAL_CHECK_Frame.IsMouseEnabled(GetHandleFrame(self));
+    return GetHandleFrame(self):IsMouseEnabled();
 end
 
 function HANDLE:IsMouseClickEnabled()
-    return LOCAL_CHECK_Frame.IsMouseClickEnabled(GetHandleFrame(self));
+    return GetHandleFrame(self):IsMouseClickEnabled();
 end
 
 function HANDLE:IsMouseMotionEnabled()
-    return LOCAL_CHECK_Frame.IsMouseMotionEnabled(GetHandleFrame(self));
+    return GetHandleFrame(self):IsMouseMotionEnabled();
 end
 
 function HANDLE:IsKeyboardEnabled()
-    return LOCAL_CHECK_Frame.IsKeyboardEnabled(GetHandleFrame(self));
+    return GetHandleFrame(self):IsKeyboardEnabled();
 end
 
 function HANDLE:IsGamePadButtonEnabled()
@@ -155,15 +147,15 @@ function HANDLE:IsGamePadStickEnabled()
 end
 
 function HANDLE:GetObjectType()
-    return LOCAL_CHECK_Frame.GetObjectType(GetUnprotectedHandleFrame(self))
+    return GetUnprotectedHandleFrame(self):GetObjectType()
 end
 
 function HANDLE:IsObjectType(ot)
-    return LOCAL_CHECK_Frame.IsObjectType(GetUnprotectedHandleFrame(self), tostring(ot))
+    return GetUnprotectedHandleFrame(self):IsObjectType(tostring(ot))
 end
 
 function HANDLE:IsProtected()
-    return LOCAL_CHECK_Frame.IsProtected(GetUnprotectedHandleFrame(self));
+    return GetUnprotectedHandleFrame(self):IsProtected();
 end
 
 
@@ -171,7 +163,7 @@ function HANDLE:GetAttribute(name)
     if (type(name) ~= "string" or name:match("^_")) then
         return;
     end
-    local val = LOCAL_CHECK_Frame.GetAttribute(GetHandleFrame(self), name)
+    local val = GetHandleFrame(self):GetAttribute(name)
     local tv = type(val);
     if (tv == "string" or tv == "number" or tv == "boolean" or val == nil) then
         return val;
@@ -186,7 +178,7 @@ function HANDLE:GetFrameRef(label)
     if (type(label) ~= "string") then
         return;
     end
-    local val = LOCAL_CHECK_Frame.GetAttribute(GetHandleFrame(self), "frameref-" .. label);
+    local val = GetHandleFrame(self):GetAttribute("frameref-" .. label);
     local tv = type(val);
     if (tv == "userdata" and IsFrameHandle(val)) then
         return val;
@@ -219,54 +211,49 @@ function HANDLE:GetEffectiveAttribute(name, button, prefix, suffix)
     return nil;
 end
 
-local function ShouldAllowAccessToFrame(nolockdown, frame)
-	if LOCAL_CHECK_Frame.IsForbidden(frame) then
-		return false;
-	end
-
-	if not nolockdown then
-        return LOCAL_CHECK_Frame.IsProtected(frame);
-    end
-
-    return nolockdown;
-end
-
-local function GetValidatedFrameHandle(nolockdown, frame)
-	if ShouldAllowAccessToFrame(nolockdown, frame) then
-		return GetFrameHandle(frame);
-	end
-
-	return nil;
-end
-
 
 local function FrameHandleMapper(nolockdown, frame, nextFrame, ...)
     if (not frame) then
         return;
     end
-
-    frame = GetValidatedFrameHandle(nolockdown, frame);
-
-    if frame then
-        if (nextFrame) then
-            return frame, FrameHandleMapper(nolockdown, nextFrame, ...);
-        else
-            return frame;
+    -- Do an explicit protection check to avoid errors from
+    -- the frame handle lookup
+    local p = nolockdown;
+    if (not p) then
+        p = frame:IsProtected();
+    end
+    if (p) then
+        frame = GetFrameHandle(frame);
+        if (frame) then
+            if (nextFrame) then
+                return frame, FrameHandleMapper(nolockdown, nextFrame, ...);
+            else
+                return frame;
+            end
         end
     end
-
     if (nextFrame) then
         return FrameHandleMapper(nolockdown, nextFrame, ...);
     end
 end
 
-local function FrameHandleInserter(nolockdown, result, ...)
+local function FrameHandleInserter(result, ...)
+    local nolockdown = not InCombatLockdown();
     local idx = #result;
     for i = 1, select('#', ...) do
-        local frame = GetValidatedFrameHandle(nolockdown, select(i, ...));
-        if frame then
-			idx = idx + 1;
-			result[idx] = frame;
+        local frame = select(i, ...);
+        -- Do an explicit protection check to avoid errors from
+        -- the frame handle lookup
+        local p = nolockdown;
+        if (not p) then
+            p = frame:IsProtected();
+        end
+        if (p) then
+            frame = GetFrameHandle(frame);
+            if (frame) then
+                idx = idx + 1;
+                result[idx] = frame;
+            end
         end
     end
 
@@ -274,15 +261,17 @@ local function FrameHandleInserter(nolockdown, result, ...)
 end
 
 function HANDLE:GetChildren()
-    return FrameHandleMapper(not InCombatLockdown(), LOCAL_CHECK_Frame.GetChildren(GetHandleFrame(self)));
+    return FrameHandleMapper(not InCombatLockdown(),
+                             GetHandleFrame(self):GetChildren());
 end
 
 function HANDLE:GetChildList(tbl)
-    return FrameHandleInserter(not InCombatLockdown(), tbl, LOCAL_CHECK_Frame.GetChildren(GetHandleFrame(self)));
+    return FrameHandleInserter(tbl, GetHandleFrame(self):GetChildren());
 end
 
 function HANDLE:GetParent()
-    return FrameHandleMapper(not InCombatLockdown(), LOCAL_CHECK_Frame.GetParent(GetHandleFrame(self)));
+    return FrameHandleMapper(not InCombatLockdown(),
+                             GetHandleFrame(self):GetParent());
 end
 
 -- NOTE: Cannot allow the frame to figure out if it has mouse focus
@@ -291,9 +280,9 @@ end
 function HANDLE:GetMousePosition()
     local frame = GetHandleFrame(self);
     local x, y = GetCursorPosition()
-    local l, b, w, h = LOCAL_CHECK_Frame.GetRect(frame)
+    local l, b, w, h = frame:GetRect()
     if (not w or not h or w == 0 or h == 0) then return nil; end
-    local e = LOCAL_CHECK_Frame.GetEffectiveScale(frame);
+    local e = frame:GetEffectiveScale();
     x, y = x / e, y /e;
     x = x - l
     y = y - b
@@ -310,17 +299,17 @@ end
 local function RF_CheckUnderMouse(x, y, ...)
     for i = 1, select('#', ...) do
         local frame = select(i, ...);
-        if (frame and LOCAL_CHECK_Frame.IsProtected(frame) and LOCAL_CHECK_Frame.IsVisible(frame)) then
-            local l, b, w, h = LOCAL_CHECK_Frame.GetRect(frame)
+        if (frame and frame:IsProtected() and frame:IsVisible()) then
+            local l, b, w, h = frame:GetRect()
             if (w and h) then
-                local e = LOCAL_CHECK_Frame.GetEffectiveScale(frame);
+                local e = frame:GetEffectiveScale();
                 local fx = x / e - l;
                 if ((fx >= 0) and (fx <= w)) then
                     local fy = y / e - b;
                     if ((fy >= 0) and (fy <= h)) then return true; end
                 end
             end
-            if (RF_CheckUnderMouse(x, y, LOCAL_CHECK_Frame.GetChildren(frame))) then
+            if (RF_CheckUnderMouse(x, y, frame:GetChildren())) then
                 return true;
             end
         end
@@ -330,9 +319,9 @@ end
 function HANDLE:IsUnderMouse(recursive)
     local frame = GetHandleFrame(self);
     local x, y = GetCursorPosition();
-    local l, b, w, h = LOCAL_CHECK_Frame.GetRect(frame)
+    local l, b, w, h = frame:GetRect()
     if (w and h) then
-        local e = LOCAL_CHECK_Frame.GetEffectiveScale(frame);
+        local e = frame:GetEffectiveScale();
         local fx = x / e - l;
         if ((fx >= 0) and (fx <= w)) then
             local fy = y / e - b;
@@ -342,20 +331,15 @@ function HANDLE:IsUnderMouse(recursive)
     if (not recursive) then
         return;
     end
-    return RF_CheckUnderMouse(x, y, LOCAL_CHECK_Frame.GetChildren(frame));
+    return RF_CheckUnderMouse(x, y, frame:GetChildren());
 end
 
 function HANDLE:GetNumPoints()
-    return LOCAL_CHECK_Frame.GetNumPoints(GetHandleFrame(self));
+    return GetHandleFrame(self):GetNumPoints();
 end
 
 function HANDLE:GetPoint(i)
-	local frame = GetHandleFrame(self);
-	if LOCAL_CHECK_Frame.IsAnchoringRestricted(frame) then
-		return nil;
-	end
-
-    local point, frame, relative, dx, dy = LOCAL_CHECK_Frame.GetPoint(frame, i);
+    local point, frame, relative, dx, dy = GetHandleFrame(self):GetPoint(i);
     local handle;
     if (frame) then
         handle = FrameHandleMapper(not InCombatLockdown(), frame);
@@ -370,38 +354,38 @@ end
 
 function HANDLE:Show(skipAttr)
     local frame = GetHandleFrame(self);
-    LOCAL_CHECK_Frame.Show(frame);
+    frame:Show();
     if (not skipAttr) then
-        LOCAL_CHECK_Frame.SetAttribute(frame, "statehidden", nil);
+        frame:SetAttribute("statehidden", nil);
     end
 end
 
 function HANDLE:Hide(skipAttr)
     local frame = GetHandleFrame(self);
-    LOCAL_CHECK_Frame.Hide(frame);
+    frame:Hide();
     if (not skipAttr) then
-        LOCAL_CHECK_Frame.SetAttribute(frame, "statehidden", true);
+        frame:SetAttribute("statehidden", true);
     end
 end
 
 function HANDLE:SetID(id)
-    LOCAL_CHECK_Frame.SetID(GetHandleFrame(self), tonumber(id) or 0);
+    GetHandleFrame(self):SetID(tonumber(id) or 0);
 end
 
 function HANDLE:SetWidth(width)
-    LOCAL_CHECK_Frame.SetWidth(GetHandleFrame(self), tonumber(width));
+    GetHandleFrame(self):SetWidth(tonumber(width));
 end
 
 function HANDLE:SetHeight(height)
-    LOCAL_CHECK_Frame.SetHeight(GetHandleFrame(self), tonumber(height));
+    GetHandleFrame(self):SetHeight(tonumber(height));
 end
 
 function HANDLE:SetScale(scale)
-    LOCAL_CHECK_Frame.SetScale(GetHandleFrame(self), tonumber(scale));
+    GetHandleFrame(self):SetScale(tonumber(scale));
 end
 
 function HANDLE:SetAlpha(alpha)
-    LOCAL_CHECK_Frame.SetAlpha(GetHandleFrame(self), tonumber(alpha));
+    GetHandleFrame(self):SetAlpha(tonumber(alpha));
 end
 
 local _set_points = {
@@ -410,7 +394,7 @@ local _set_points = {
 };
 
 function HANDLE:ClearAllPoints()
-    LOCAL_CHECK_Frame.ClearAllPoints(GetHandleFrame(self));
+    GetHandleFrame(self):ClearAllPoints();
 end
 
 function HANDLE:SetPoint(point, relframe, relpoint, xofs, yofs)
@@ -452,19 +436,19 @@ function HANDLE:SetPoint(point, relframe, relpoint, xofs, yofs)
         realrelframe = nil;
     elseif (relframe == "$cursor") then
         local cx, cy = GetCursorPosition();
-        local eff = LOCAL_CHECK_Frame.GetEffectiveScale(frame);
+        local eff = frame:GetEffectiveScale();
         xofs = xofs + (cx / eff);
         yofs = yofs + (cy / eff);
         relpoint = "BOTTOMLEFT";
         realrelframe = nil;
     elseif (relframe == "$parent") then
-        realrelframe = LOCAL_CHECK_Frame.GetParent(frame);
+        realrelframe = frame:GetParent();
     else
         error("Invalid relative frame id '" .. tostring(relframe) .. "'");
         return;
     end
 
-    LOCAL_CHECK_Frame.SetPoint(frame, point, realrelframe, relpoint, xofs, yofs);
+    frame:SetPoint(point, realrelframe, relpoint, xofs, yofs);
 end
 
 function HANDLE:SetAllPoints(relframe)
@@ -480,13 +464,13 @@ function HANDLE:SetAllPoints(relframe)
     elseif ((relframe == nil) or (relframe == "$screen")) then
         realrelframe = nil;
     elseif (relframe == "$parent") then
-        realrelframe = LOCAL_CHECK_Frame.GetParent(frame);
+        realrelframe = frame:GetParent();
     else
         error("Invalid relative frame id '" .. tostring(relframe) .. "'");
         return;
     end
 
-    LOCAL_CHECK_Frame.SetAllPoints(frame, realrelframe);
+    frame:SetAllPoints(realrelframe);
 end
 
 function HANDLE:SetAttribute(name, value)
@@ -502,7 +486,7 @@ function HANDLE:SetAttribute(name, value)
             return;
         end
     end
-    LOCAL_CHECK_Frame.SetAttribute(GetHandleFrame(self), name, value);
+    GetHandleFrame(self):SetAttribute(name, value);
 end
 
 function HANDLE:ClearBindings()
@@ -567,19 +551,19 @@ function HANDLE:SetBindingItem(priority, key, item)
 end
 
 function HANDLE:Raise()
-    LOCAL_CHECK_Frame.Raise(GetHandleFrame(self));
+    GetHandleFrame(self):Raise();
 end
 
 function HANDLE:Lower()
-    LOCAL_CHECK_Frame.Lower(GetHandleFrame(self));
+    GetHandleFrame(self):Lower();
 end
 
 function HANDLE:SetFrameLevel(level)
-    LOCAL_CHECK_Frame.SetFrameLevel(GetHandleFrame(self), tonumber(level));
+    GetHandleFrame(self):SetFrameLevel(tonumber(level));
 end
 
 function HANDLE:SetFrameStrata(strata)
-    LOCAL_CHECK_Frame.SetFrameStrata(GetHandleFrame(self), tostring(strata));
+    GetHandleFrame(self):SetFrameStrata(tostring(strata));
 end
 
 function HANDLE:SetParent(handle)
@@ -596,15 +580,15 @@ function HANDLE:SetParent(handle)
         end
     end
 
-    LOCAL_CHECK_Frame.SetParent(GetHandleFrame(self), parent);
+    GetHandleFrame(self):SetParent(parent);
 end
 
 function HANDLE:EnableMouse(isEnabled)
-    LOCAL_CHECK_Frame.EnableMouse(GetHandleFrame(self), (isEnabled and true) or false);
+    GetHandleFrame(self):EnableMouse((isEnabled and true) or false);
 end
 
 function HANDLE:EnableKeyboard(isEnabled)
-    LOCAL_CHECK_Frame.EnableKeyboard(GetHandleFrame(self), (isEnabled and true) or false);
+    GetHandleFrame(self):EnableKeyboard((isEnabled and true) or false);
 end
 
 function HANDLE:EnableGamePadButton(isEnabled)
@@ -643,20 +627,20 @@ end
 
 function HANDLE:Disable()
     local frame = GetHandleFrame(self);
-    if (not LOCAL_CHECK_Frame.IsObjectType(frame, "Button")) then
+    if (not frame:IsObjectType("Button")) then
         error("Frame is not a Button");
         return;
     end
-    LOCAL_CHECK_Frame.Disable(frame);
+    frame:Disable();
 end
 
 function HANDLE:Enable()
     local frame = GetHandleFrame(self);
-    if (not LOCAL_CHECK_Frame.IsObjectType(frame, "Button")) then
+    if (not frame:IsObjectType("Button")) then
         error("Frame is not a Button");
         return;
     end
-    LOCAL_CHECK_Frame.Enable(frame);
+    frame:Enable();
 end
 
 ---------------------------------------------------------------------------
@@ -723,7 +707,7 @@ function HANDLE:RunAttribute(snippetAttr, ...)
         error("Invalid snippet attribute");
         return;
     end
-    local body = LOCAL_CHECK_Frame.GetAttribute(frame, snippetAttr);
+    local body = frame:GetAttribute(snippetAttr);
     if (type(body) ~= "string") then
         error("Invalid snippet body");
         return;
@@ -748,14 +732,14 @@ local function ChildUpdate_Helper(environment, controlHandle,
     end
     for i = 1, select('#', ...) do
         local child = select(i, ...);
-        local p = LOCAL_CHECK_Frame.IsProtected(child);
+        local p = child:IsProtected();
         if (p) then
             local body;
             if (scriptattr) then
-                body = LOCAL_CHECK_Frame.GetAttribute(child, scriptattr);
+                body = child:GetAttribute(scriptattr);
             end
             if (body == nil) then
-                body = LOCAL_CHECK_Frame.GetAttribute(child, "_childupdate");
+                body = child:GetAttribute("_childupdate");
             end
             if (body and type(body) == "string") then
                 local selfHandle = GetFrameHandle(child, true);
@@ -776,7 +760,7 @@ function HANDLE:ChildUpdate(snippetid, message)
         return;
     end
     local env = GetManagedEnvironment(frame, true);
-    ChildUpdate_Helper(env, self, snippetid, message, LOCAL_CHECK_Frame.GetChildren(frame));
+    ChildUpdate_Helper(env, self, snippetid, message, frame:GetChildren());
 end
 
 local function CallMethod_inner(frame, methodName, ...)

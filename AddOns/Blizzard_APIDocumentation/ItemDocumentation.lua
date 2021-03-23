@@ -7,34 +7,6 @@ local Item =
 	Functions =
 	{
 		{
-			Name = "CanScrapItem",
-			Type = "Function",
-
-			Arguments =
-			{
-				{ Name = "itemLoc", Type = "table", Mixin = "ItemLocationMixin", Nilable = false },
-			},
-
-			Returns =
-			{
-				{ Name = "canBeScrapped", Type = "bool", Nilable = false },
-			},
-		},
-		{
-			Name = "CanViewItemPowers",
-			Type = "Function",
-
-			Arguments =
-			{
-				{ Name = "itemLoc", Type = "table", Mixin = "ItemLocationMixin", Nilable = false },
-			},
-
-			Returns =
-			{
-				{ Name = "isItemViewable", Type = "bool", Nilable = false },
-			},
-		},
-		{
 			Name = "DoesItemExist",
 			Type = "Function",
 
@@ -60,20 +32,6 @@ local Item =
 			Returns =
 			{
 				{ Name = "itemExists", Type = "bool", Nilable = false },
-			},
-		},
-		{
-			Name = "DoesItemMatchBonusTreeReplacement",
-			Type = "Function",
-
-			Arguments =
-			{
-				{ Name = "itemLoc", Type = "table", Mixin = "ItemLocationMixin", Nilable = false },
-			},
-
-			Returns =
-			{
-				{ Name = "matchesBonusTree", Type = "bool", Nilable = false },
 			},
 		},
 		{
@@ -245,34 +203,6 @@ local Item =
 			},
 		},
 		{
-			Name = "GetStackCount",
-			Type = "Function",
-
-			Arguments =
-			{
-				{ Name = "itemLocation", Type = "table", Mixin = "ItemLocationMixin", Nilable = false },
-			},
-
-			Returns =
-			{
-				{ Name = "stackCount", Type = "number", Nilable = false },
-			},
-		},
-		{
-			Name = "IsAnimaItemByID",
-			Type = "Function",
-
-			Arguments =
-			{
-				{ Name = "itemInfo", Type = "string", Nilable = false },
-			},
-
-			Returns =
-			{
-				{ Name = "isAnimaItem", Type = "bool", Nilable = false },
-			},
-		},
-		{
 			Name = "IsBound",
 			Type = "Function",
 
@@ -284,62 +214,6 @@ local Item =
 			Returns =
 			{
 				{ Name = "isBound", Type = "bool", Nilable = false },
-			},
-		},
-		{
-			Name = "IsItemConduit",
-			Type = "Function",
-
-			Arguments =
-			{
-				{ Name = "itemLoc", Type = "table", Mixin = "ItemLocationMixin", Nilable = false },
-			},
-
-			Returns =
-			{
-				{ Name = "isConduit", Type = "bool", Nilable = false },
-			},
-		},
-		{
-			Name = "IsItemCorrupted",
-			Type = "Function",
-
-			Arguments =
-			{
-				{ Name = "itemLoc", Type = "table", Mixin = "ItemLocationMixin", Nilable = false },
-			},
-
-			Returns =
-			{
-				{ Name = "isCorrupted", Type = "bool", Nilable = false },
-			},
-		},
-		{
-			Name = "IsItemCorruptionRelated",
-			Type = "Function",
-
-			Arguments =
-			{
-				{ Name = "itemLoc", Type = "table", Mixin = "ItemLocationMixin", Nilable = false },
-			},
-
-			Returns =
-			{
-				{ Name = "isCorruptionRelated", Type = "bool", Nilable = false },
-			},
-		},
-		{
-			Name = "IsItemCorruptionResistant",
-			Type = "Function",
-
-			Arguments =
-			{
-				{ Name = "itemLoc", Type = "table", Mixin = "ItemLocationMixin", Nilable = false },
-			},
-
-			Returns =
-			{
-				{ Name = "isCorruptionResistant", Type = "bool", Nilable = false },
 			},
 		},
 		{
@@ -371,20 +245,6 @@ local Item =
 			},
 		},
 		{
-			Name = "IsItemKeystoneByID",
-			Type = "Function",
-
-			Arguments =
-			{
-				{ Name = "itemInfo", Type = "string", Nilable = false },
-			},
-
-			Returns =
-			{
-				{ Name = "isKeystone", Type = "bool", Nilable = false },
-			},
-		},
-		{
 			Name = "IsLocked",
 			Type = "Function",
 
@@ -405,15 +265,6 @@ local Item =
 			Arguments =
 			{
 				{ Name = "itemLocation", Type = "table", Mixin = "ItemLocationMixin", Nilable = false },
-			},
-		},
-		{
-			Name = "LockItemByGUID",
-			Type = "Function",
-
-			Arguments =
-			{
-				{ Name = "itemGUID", Type = "string", Nilable = false },
 			},
 		},
 		{
@@ -441,15 +292,6 @@ local Item =
 			Arguments =
 			{
 				{ Name = "itemLocation", Type = "table", Mixin = "ItemLocationMixin", Nilable = false },
-			},
-		},
-		{
-			Name = "UnlockItemByGUID",
-			Type = "Function",
-
-			Arguments =
-			{
-				{ Name = "itemGUID", Type = "string", Nilable = false },
 			},
 		},
 	},
@@ -509,16 +351,6 @@ local Item =
 			{
 				{ Name = "itemID", Type = "number", Nilable = false },
 				{ Name = "success", Type = "bool", Nilable = false },
-			},
-		},
-		{
-			Name = "ItemChanged",
-			Type = "Event",
-			LiteralName = "ITEM_CHANGED",
-			Payload =
-			{
-				{ Name = "previousHyperlink", Type = "string", Nilable = false },
-				{ Name = "newHyperlink", Type = "string", Nilable = false },
 			},
 		},
 		{

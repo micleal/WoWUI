@@ -3,7 +3,6 @@ local generalMetaKeys =
 	SHIFT = IsShiftKeyDown,
 	CTRL = IsControlKeyDown,
 	ALT = IsAltKeyDown,
-	META = IsMetaKeyDown,
 };
 
 local keyStates = {};

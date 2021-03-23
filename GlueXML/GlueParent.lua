@@ -1,10 +1,10 @@
 
 GLUE_SCREENS = {
-	["login"] = 		{ frame = "AccountLogin", 			playMusic = true,	playAmbience = true },
-	["realmlist"] = 	{ frame = "RealmListUI", 			playMusic = true,	playAmbience = false },
-	["charselect"] = 	{ frame = "CharacterSelect",		playMusic = true,	playAmbience = false, onAttemptShow = function() InitializeCharacterScreenData() end },
-	["charcreate"] =	{ frame = "CharacterCreateFrame",	playMusic = true,	playAmbience = false, onAttemptShow = function() InitializeCharacterScreenData() end },
-	["kioskmodesplash"]={ frame = "KioskModeSplash",		playMusic = true,	playAmbience = false },
+	["login"] = 		{ frame = "AccountLogin", 		playMusic = true,	playAmbience = true },
+	["realmlist"] = 	{ frame = "RealmListUI", 		playMusic = true,	playAmbience = false },
+	["charselect"] = 	{ frame = "CharacterSelect",	playMusic = true,	playAmbience = false, onAttemptShow = function() InitializeCharacterScreenData() end },
+	["charcreate"] =	{ frame = "CharacterCreate",	playMusic = true,	playAmbience = false, onAttemptShow = function() InitializeCharacterScreenData() end },
+	["kioskmodesplash"]={ frame = "KioskModeSplash",	playMusic = true,	playAmbience = false },
 };
 
 GLUE_SECONDARY_SCREENS = {
@@ -17,7 +17,11 @@ GLUE_SECONDARY_SCREENS = {
 };
 
 ACCOUNT_SUSPENDED_ERROR_CODE = 53;
-GENERIC_DISCONNECTED_ERROR_CODE = 319;
+
+-- Mirror of the same variables in Blizzard_StoreUISecure.lua and UIParent.lua
+local WOW_GAMES_CATEGORY_ID = 33; 
+WOW_GAME_TIME_CATEGORY_ID = 37;
+WOW_CLASSIC_CHARACTER_CLONE_CATEGORY_ID = 159;
 
 local function OnDisplaySizeChanged(self)
 	local width = GetScreenWidth();
@@ -59,19 +63,11 @@ function GlueParent_OnLoad(self)
 	self:RegisterEvent("DISPLAY_SIZE_CHANGED");
 	self:RegisterEvent("LUA_WARNING");
 	self:RegisterEvent("SUBSCRIPTION_CHANGED_KICK_IMMINENT");
-	-- Events for Global Mouse Down
-	self:RegisterEvent("GLOBAL_MOUSE_DOWN");
-	self:RegisterEvent("GLOBAL_MOUSE_UP");
 	self:RegisterEvent("KIOSK_SESSION_SHUTDOWN");
 	self:RegisterEvent("KIOSK_SESSION_EXPIRED");
 	self:RegisterEvent("KIOSK_SESSION_EXPIRATION_CHANGED");
 
 	OnDisplaySizeChanged(self);
-end
-
-local function IsGlobalMouseEventHandled(buttonID, event)
-	local frame = GetMouseFocus();
-	return frame and frame.HandlesGlobalMouseEvent and frame:HandlesGlobalMouseEvent(buttonID, event);
 end
 
 function GlueParent_OnEvent(self, event, ...)
@@ -81,7 +77,7 @@ function GlueParent_OnEvent(self, event, ...)
 		GlueParent_UpdateDialogs();
 		GlueParent_CheckCinematic();
 		if ( AccountLogin:IsVisible() ) then
-			SetExpansionLogo(AccountLogin.UI.GameLogo, GetClientDisplayExpansionLevel());
+			SetClassicLogo(AccountLogin.UI.GameLogo, GetClientDisplayExpansionLevel());
 		end
 	elseif ( event == "LOGIN_STATE_CHANGED" ) then
 		GlueParent_EnsureValidScreen();
@@ -99,20 +95,11 @@ function GlueParent_OnEvent(self, event, ...)
 		if not StoreFrame_IsShown() then
 			GlueDialog_Show("SUBSCRIPTION_CHANGED_KICK_WARNING");
 		end
-	elseif (event == "GLOBAL_MOUSE_DOWN" or event == "GLOBAL_MOUSE_UP") then
-		local buttonID = ...;
-		if not IsGlobalMouseEventHandled(buttonID, event) then
-			UIDropDownMenu_HandleGlobalMouseEvent(buttonID, event);
-		end
 	elseif (event == "KIOSK_SESSION_SHUTDOWN" or event == "KIOSK_SESSION_EXPIRED") then
 		GlueParent_SetScreen("kioskmodesplash");
 	elseif (event == "KIOSK_SESSION_EXPIRATION_CHANGED") then
 		GlueDialog_Show("OKAY", KIOSK_SESSION_TIMER_CHANGED);
 	end
-end
-
-function InGlue()
-	return true;
 end
 
 function SecureCapsuleGet(name)
@@ -150,17 +137,9 @@ function GlueParent_GetBestScreen()
 	end
 end
 
-local function IsHigherPriorityError(errorID, currentErrorID)
-	if currentErrorID and errorID == GENERIC_DISCONNECTED_ERROR_CODE then
-		return false;
-	end
-	return true;
-end
-
-local currentlyShowingErrorID = nil;
 function GlueParent_UpdateDialogs()
 	local auroraState, connectedToWoW, wowConnectionState, hasRealmList, waitingForRealmList = C_Login.GetState();
-	local errorID;
+
 	if ( auroraState == LE_AURORA_STATE_CONNECTING ) then
 		local isQueued, queuePosition, estimatedSeconds = C_Login.GetLogonQueueInfo();
 		if ( isQueued ) then
@@ -178,104 +157,112 @@ function GlueParent_UpdateDialogs()
 			GlueDialog_Show("CANCEL", LOGIN_STATE_CONNECTING);
 		end
 	elseif ( auroraState == LE_AURORA_STATE_NONE and C_Login.GetLastError() ) then
-		local errorCategory, localizedString, debugString, errorCodeString;
-		errorCategory, errorID, localizedString, debugString, errorCodeString = C_Login.GetLastError();
+		local errorCategory, errorID, localizedString, debugString, errorCodeString = C_Login.GetLastError();
 
-		if (IsHigherPriorityError(errorID, currentlyShowingErrorID)) then
-			local isHTML = false;
-			local hasURL = false;
-			local useGenericURL = false;
+		local isHTML = false;
+		local hasURL = false;
+		local useGenericURL = false;
 
-			--If we didn't get a string from C, look one up in GlueStrings as HTML
-			if ( not localizedString ) then
-				local tag = string.format("%s_ERROR_%d_HTML", errorCategory, errorID);
-				localizedString = _G[tag];
-				if ( localizedString ) then
-					isHTML = true;
-				end
+		--If we didn't get a string from C, look one up in GlueStrings as HTML
+		if ( not localizedString ) then
+			local tag = string.format("%s_ERROR_%d_HTML", errorCategory, errorID);
+			localizedString = _G[tag];
+			if ( localizedString ) then
+				isHTML = true;
 			end
-
-			--If we didn't get a string from C, look one up in GlueStrings
-			if ( not localizedString ) then
-				local tag = string.format("%s_ERROR_%d", errorCategory, errorID);
-				localizedString = _G[tag];
-			end
-
-			--If we still don't have one, just display a generic error with the ID
-			if ( not localizedString ) then
-				localizedString = _G[errorCategory.."_ERROR_OTHER"];
-				useGenericURL = true;
-			end
-
-			--If we got a debug message, stick it on the end of the errorCodeString
-			if ( debugString ) then
-				errorCodeString = errorCodeString.." [[DBG "..debugString.."]]";
-			end
-
-			--See if we want a custom URL
-			local urlTag = string.format("%s_ERROR_%d_URL", errorCategory, errorID);
-			if ( _G[urlTag] ) then
-				hasURL = true;
-			end
-
-			if ( errorCategory == "BNET" and errorID == ACCOUNT_SUSPENDED_ERROR_CODE ) then
-				local remaining = C_Login.GetAccountSuspensionRemainingTime();
-				if (remaining) then
-					local days = floor(remaining / 86400);
-					local hours = floor((remaining / 3600) - (days * 24));
-					local minutes = floor((remaining / 60) - (days * 1440) - (hours * 60));
-					localizedString = localizedString:format(" "..ACCOUNT_SUSPENSION_EXPIRATION:format(days, hours, minutes));
-				else
-					localizedString = localizedString:format("");
-				end
-			end
-
-			--Append the errorCodeString
-			if ( isHTML ) then
-				--Pretty hacky...
-				local endOfHTML = "</p></body></html>";
-				localizedString = string.gsub(localizedString, endOfHTML, string.format(" (%s)%s", errorCodeString, endOfHTML));
-			else
-				localizedString = string.format("%s (%s)", localizedString, errorCodeString);
-			end
-
-			if ( isHTML ) then
-				GlueDialog_Show("OKAY_HTML", localizedString);
-			elseif ( hasURL ) then
-				GlueDialog_Show("OKAY_WITH_URL", localizedString, urlTag);
-			elseif ( useGenericURL ) then
-				GlueDialog_Show("OKAY_WITH_GENERIC_URL", localizedString);
-			else
-				GlueDialog_Show("OKAY", localizedString);
-			end
-			currentlyShowingErrorID = errorID;
 		end
+
+		--If we didn't get a string from C, look one up in GlueStrings
+		if ( not localizedString ) then
+			local tag = string.format("%s_ERROR_%d", errorCategory, errorID);
+			localizedString = _G[tag];
+		end
+
+		--If we still don't have one, just display a generic error with the ID
+		if ( not localizedString ) then
+			localizedString = _G[errorCategory.."_ERROR_OTHER"];
+			useGenericURL = true;
+		end
+
+		--If we got a debug message, stick it on the end of the errorCodeString
+		if ( debugString ) then
+			errorCodeString = errorCodeString.." [[DBG "..debugString.."]]";
+		end
+
+		--See if we want a custom URL
+		local urlTag = string.format("%s_ERROR_%d_URL", errorCategory, errorID);
+		if ( _G[urlTag] ) then
+			hasURL = true;
+		end
+
+		if ( errorCategory == "BNET" and errorID == ACCOUNT_SUSPENDED_ERROR_CODE ) then
+			local remaining = C_Login.GetAccountSuspensionRemainingTime();
+			if (remaining) then
+				local days = floor(remaining / 86400);
+				local hours = floor((remaining / 3600) - (days * 24));
+				local minutes = floor((remaining / 60) - (days * 1440) - (hours * 60));
+				localizedString = localizedString:format(" "..ACCOUNT_SUSPENSION_EXPIRATION:format(days, hours, minutes));
+			else
+				localizedString = localizedString:format("");
+			end
+		end
+
+		--Append the errorCodeString
+		if ( isHTML ) then
+			--Pretty hacky...
+			local endOfHTML = "</p></body></html>";
+			localizedString = string.gsub(localizedString, endOfHTML, string.format(" (%s)%s", errorCodeString, endOfHTML));
+		else
+			localizedString = string.format("%s (%s)", localizedString, errorCodeString);
+		end
+
+		if ( isHTML ) then
+			GlueDialog_Show("OKAY_HTML", localizedString);
+		elseif ( hasURL ) then
+			GlueDialog_Show("OKAY_WITH_URL", localizedString, urlTag);
+		elseif ( useGenericURL ) then
+			GlueDialog_Show("OKAY_WITH_GENERIC_URL", localizedString);
+		else
+			GlueDialog_Show("OKAY", localizedString);
+		end
+
+		C_Login.ClearLastError();
 	elseif (  waitingForRealmList ) then
 		GlueDialog_Show("REALM_LIST_IN_PROGRESS");
 	elseif ( wowConnectionState == LE_WOW_CONNECTION_STATE_CONNECTING ) then
 		GlueDialog_Show("CANCEL", GAME_SERVER_LOGIN);
 	elseif ( wowConnectionState == LE_WOW_CONNECTION_STATE_IN_QUEUE ) then
+		local serverName, pvp, rp, down = GetServerName();
 		local waitPosition, waitMinutes, hasFCM = C_Login.GetWaitQueueInfo();
 
-		if ( hasFCM ) then
-			GlueDialog_Show("QUEUED_WITH_FCM", _G["QUEUE_FCM"]);
-		elseif ( waitMinutes == 0 ) then
-			local queueString = string.format(_G["QUEUE_TIME_LEFT_UNKNOWN"], waitPosition);
-			GlueDialog_Show("QUEUED_NORMAL", queueString);
-		elseif (waitMinutes == 1) then
-			local queueString = string.format(_G["QUEUE_TIME_LEFT_SECONDS"], waitPosition);
-			GlueDialog_Show("QUEUED_NORMAL", queueString);
+		local queueString;
+		if (serverName) then
+			if ( waitMinutes == 0 ) then
+				queueString = string.format(_G["QUEUE_NAME_TIME_LEFT_UNKNOWN"], serverName, waitPosition);
+			elseif ( waitMinutes == 1 ) then
+				queueString = string.format(_G["QUEUE_NAME_TIME_LEFT_SECONDS"], serverName, waitPosition);
+			else
+				queueString = string.format(_G["QUEUE_NAME_TIME_LEFT"], serverName, waitPosition, waitMinutes);
+			end
 		else
-			local queueString = string.format(_G["QUEUE_TIME_LEFT"], waitPosition, waitMinutes);
+			if ( waitMinutes == 0 ) then
+				queueString = string.format(_G["QUEUE_TIME_LEFT_UNKNOWN"], waitPosition);
+			elseif ( waitMinutes == 1 ) then
+				queueString = string.format(_G["QUEUE_TIME_LEFT_SECONDS"], waitPosition);
+			else
+				queueString = string.format(_G["QUEUE_TIME_LEFT"], waitPosition, waitMinutes);
+			end
+		end
+
+		if ( hasFCM ) then
+			queueString = queueString .. "\n\n" .. _G["QUEUE_FCM"];
+			GlueDialog_Show("QUEUED_WITH_FCM", queueString);
+		else
 			GlueDialog_Show("QUEUED_NORMAL", queueString);
 		end
 	else
 		-- JS_TODO: make it so this only cancels state dialogs, like "Connecting"
 		GlueDialog_Hide();
-	end
-	
-	if not errorID then
-		currentlyShowingErrorID = nil;
 	end
 end
 
@@ -298,7 +285,7 @@ local function GlueParent_ChangeScreen(screenInfo, screenTable)
 
 	--Hide all other screens
 	for key, info in pairs(screenTable) do
-		if ( info ~= screenInfo and _G[info.frame] ) then
+		if ( info ~= screenInfo ) then
 			_G[info.frame]:Hide();
 		end
 	end
@@ -306,10 +293,10 @@ local function GlueParent_ChangeScreen(screenInfo, screenTable)
 	--Start music. Have to do this before showing screen in case its OnShow changes screen.
 	local displayedExpansionLevel = GetClientDisplayExpansionLevel();
 	if ( screenInfo.playMusic ) then
-		PlayGlueMusic(SafeGetExpansionData(EXPANSION_GLUE_MUSIC, displayedExpansionLevel));
+		PlayGlueMusic(EXPANSION_GLUE_MUSIC[displayedExpansionLevel]);
 	end
 	if ( screenInfo.playAmbience ) then
-		PlayGlueAmbience(SafeGetExpansionData(EXPANSION_GLUE_AMBIENCE, displayedExpansionLevel), 4.0);
+		PlayGlueAmbience(EXPANSION_GLUE_AMBIENCE[displayedExpansionLevel], 4.0);
 	end
 
 	--Actually show this screen
@@ -386,10 +373,10 @@ function GlueParent_CloseSecondaryScreen()
 		if ( primaryScreen and GLUE_SCREENS[primaryScreen] ) then
 			local displayedExpansionLevel = GetClientDisplayExpansionLevel();
 			if ( GLUE_SCREENS[primaryScreen].playMusic ) then
-				PlayGlueMusic(SafeGetExpansionData(EXPANSION_GLUE_MUSIC, displayedExpansionLevel));
+				PlayGlueMusic(EXPANSION_GLUE_MUSIC[displayedExpansionLevel]);
 			end
 			if ( GLUE_SCREENS[primaryScreen].playAmbience ) then
-				PlayGlueAmbience(SafeGetExpansionData(EXPANSION_GLUE_AMBIENCE, displayedExpansionLevel), 4.0);
+				PlayGlueAmbience(EXPANSION_GLUE_AMBIENCE[displayedExpansionLevel], 4.0);
 			end
 		end
 
@@ -407,16 +394,12 @@ end
 
 function GlueParent_CheckCinematic()
 	local cinematicIndex = tonumber(GetCVar("playIntroMovie"));
-	local displayExpansionLevel = LE_EXPANSION_LEVEL_CURRENT;
+	local displayExpansionLevel = GetClientDisplayExpansionLevel();
 	if ( not cinematicIndex or cinematicIndex <= displayExpansionLevel ) then
 		SetCVar("playIntroMovie", displayExpansionLevel + 1);
-		MovieFrame.version = C_Login.IsNewPlayer() and 1 or tonumber(GetCVar("playIntroMovie"));
+		MovieFrame.version = tonumber(GetCVar("playIntroMovie"));
 		GlueParent_OpenSecondaryScreen("movie");
 	end
-end
-
-function ToggleFrame(frame)
-	frame:SetShown(not frame:IsShown());
 end
 
 -- =============================================================
@@ -424,15 +407,13 @@ end
 -- =============================================================
 
 function SetLoginScreenModel(model)
+
 	local expansionLevel = GetClientDisplayExpansionLevel();
-	local lowResBG = SafeGetExpansionData(EXPANSION_LOW_RES_BG, expansionLevel);
-	local highResBG = SafeGetExpansionData(EXPANSION_HIGH_RES_BG, expansionLevel);
+	local lowResBG = EXPANSION_LOW_RES_BG[expansionLevel];
+	local highResBG = EXPANSION_HIGH_RES_BG[expansionLevel];
+	local background = GetLoginScreenBackground(highResBG, lowResBG);
 
-	if lowResBG and highResBG then
-		local background = GetLoginScreenBackground(highResBG, lowResBG);
-		model:SetModel(background, true);
-	end
-
+	model:SetModel(background, true);
 	model:SetCamera(0);
 	model:SetSequence(0);
 end
@@ -463,6 +444,7 @@ local glueScreenTags =
 		["PANDAREN"] = "PANDARENCHARACTERSELECT",
 	},
 
+--[[
 	["charcreate"] =
 	{
 		-- Classes
@@ -477,6 +459,7 @@ local glueScreenTags =
 		["ALLIANCE"] = true,
 		["NEUTRAL"] = true,
 	},
+--]]
 
 	["default"] =
 	{
@@ -503,10 +486,6 @@ local glueScreenTags =
 		["HIGHMOUNTAINTAUREN"] = true,
 		["DARKIRONDWARF"] = true,
 		["MAGHARORC"] = true,
-		["ZANDALARITROLL"] = true,
-		["KULTIRAN"] = true,
-		["MECHAGNOME"] = true,
-		["VULPERA"] = true,
 	},
 };
 
@@ -551,7 +530,7 @@ local function UpdateGlueTag()
 			class = classInfo.fileName;
 		end
 		local raceID = C_CharacterCreation.GetSelectedRace();
-		race = C_CharacterCreation.GetNameForRace(raceID);
+		race = select(2, C_CharacterCreation.GetNameForRace(raceID));
 		faction = C_CharacterCreation.GetFactionForRace(raceID);
 	end
 
@@ -582,12 +561,87 @@ local function PlayGlueAmbienceFromTag()
 	PlayGlueAmbience(GLUE_AMBIENCE_TRACKS[GetCurrentGlueTag()], 4.0);
 end
 
-function ResetModel(model)
+function GlueParent_DeathKnightButtonSwapMultiTexture(self)
+	local textureBase;
+	local highlightBase = "Interface\\Glues\\Common\\Glue-Panel-Button-Highlight";
+
+	if ( not self:IsEnabled() ) then
+		textureBase = "Interface\\Glues\\Common\\Glue-Panel-Button-Disabled";
+	elseif ( self.down ) then
+		textureBase = "Interface\\Glues\\Common\\Glue-Panel-Button-Down";
+	else
+		textureBase = "Interface\\Glues\\Common\\Glue-Panel-Button-Up";
+	end
+
+	local currentGlueTag = GetCurrentGlueTag();
+
+	if ( self.currentGlueTag ~= currentGlueTag or self.textureBase ~= textureBase ) then
+		self.currentGlueTag = currentGlueTag;
+		self.textureBase = textureBase;
+
+		if ( currentGlueTag == "DEATHKNIGHT" ) then
+			local suffix = self:IsEnabled() and "-Blue" or "";
+			local texture = textureBase..suffix;
+			local highlight = highlightBase..suffix;
+			self.Left:SetTexture(texture);
+			self.Middle:SetTexture(texture);
+			self.Right:SetTexture(texture);
+			self:SetHighlightTexture(highlight);
+		else
+			self.Left:SetTexture(textureBase);
+			self.Middle:SetTexture(textureBase);
+			self.Right:SetTexture(textureBase);
+			self:SetHighlightTexture(highlightBase);
+		end
+	end
+end
+
+function GlueParent_DeathKnightButtonSwapSingleTexture(self)
+	local currentTag = GetCurrentGlueTag();
+	if ( self.currentGlueTag ~= currentTag ) then
+		self.currentGlueTag = currentTag;
+
+		if (currentTag == "DEATHKNIGHT") then
+			-- Not currently needed, but could support other swaps here.
+			self:SetNormalTexture("Interface\\Glues\\Common\\Glue-Panel-Button-Up-Blue");
+			self:SetPushedTexture("Interface\\Glues\\Common\\Glue-Panel-Button-Down-Blue");
+			self:SetHighlightTexture("Interface\\Glues\\Common\\Glue-Panel-Button-Highlight-Blue");
+		else
+			self:SetNormalTexture("Interface\\Glues\\Common\\Glue-Panel-Button-Up");
+			self:SetPushedTexture("Interface\\Glues\\Common\\Glue-Panel-Button-Down");
+			self:SetHighlightTexture("Interface\\Glues\\Common\\Glue-Panel-Button-Highlight");
+		end
+	end
+end
+
+function GlueParent_DeathKnightButtonSwap(self)
+	if ( self.Left ) then
+		GlueParent_DeathKnightButtonSwapMultiTexture(self);
+	else
+		GlueParent_DeathKnightButtonSwapSingleTexture(self);
+	end
+end
+
+-- Function to set the background model for character select and create screens
+function SetBackgroundModel(model, path)
+	if ( model == CharacterCreate ) then
+		C_CharacterCreation.SetCharCustomizeBackground(path);
+	else
+		SetCharSelectBackground(path);
+	end
+
 	UpdateGlueTag();
 	PlayGlueAmbienceFromTag();
 
 	ResetLighting(model);
 	UpdateLighting(model);
+
+	-- In 1.12, the Character Create screen shows fog but the Character Select screen doesn't.
+	-- (CCharacterSelection::SetBackgroundModel() sets the lighing back to GenericLightingCallback)
+	-- Showing fog on Character Select looks bad when the character is a ghost.
+	if ( model ~= CharacterCreate ) then
+		model:ClearFog();
+	end
 end
 
 -- =============================================================
@@ -627,7 +681,6 @@ end
 
 function GetDisplayedExpansionLogo(expansionLevel)
 	local isTrial = expansionLevel == nil;
-
 	if isTrial then
 		return [[Interface\Glues\Common\Glues-WoW-FreeTrial]];
 	elseif expansionLevel <= GetMinimumExpansionLevel() then
@@ -641,10 +694,11 @@ function GetDisplayedExpansionLogo(expansionLevel)
 			return expansionInfo.logo;
 		end
 	end
-
+	
 	return nil;
 end
 
+-- For Classic, most places should call "SetClassicLogo" instead.
 function SetExpansionLogo(texture, expansionLevel)
 	local logo = GetDisplayedExpansionLogo(expansionLevel);
 	if logo then
@@ -655,17 +709,21 @@ function SetExpansionLogo(texture, expansionLevel)
 	end
 end
 
+classicLogo = 'Interface\\Glues\\Common\\WOW_Classic-LogoHR';
+classicLogoTexCoords = { 0.125, 0.875, 0.3125, 0.6875 };
+function SetClassicLogo(texture)
+	texture:SetTexture(classicLogo);
+	texture:SetTexCoord(classicLogoTexCoords[1], classicLogoTexCoords[2], classicLogoTexCoords[3], classicLogoTexCoords[4]);
+	texture:Show();
+end
+
 function UpgradeAccount()
-	if IsTrialAccount() then
-		StoreInterfaceUtil.OpenToSubscriptionProduct();
+	if not IsTrialAccount() and C_StorePublic.DoesGroupHavePurchaseableProducts(WOW_GAMES_CATEGORY_ID) then
+		StoreFrame_SetGamesCategory();
+		ToggleStoreUI();
 	else
-		if C_StorePublic.DoesGroupHavePurchaseableProducts(WOW_GAMES_CATEGORY_ID) then
-			StoreFrame_SetGamesCategory();
-			ToggleStoreUI();
-		else
-			PlaySound(SOUNDKIT.GS_LOGIN_NEW_ACCOUNT);
-			LoadURLIndex(2);
-		end
+		PlaySound(SOUNDKIT.GS_LOGIN_NEW_ACCOUNT);
+		LoadURLIndex(2);
 	end
 end
 

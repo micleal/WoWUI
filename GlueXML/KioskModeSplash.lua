@@ -94,12 +94,12 @@ KioskModeSplashMixin = {}
 function KioskModeSplashMixin:OnLoad()
 	self.autoEnterWorld = false;
 	self.mode = nil;
-
-	self.NewExpansionButton.Text:SetText("Enter Bastion");
+	SetLoginScreenModel(KioskBackgroundModel);
 end
 
 function KioskModeSplashMixin:OnShow()
 	self.mode = nil;
+	SetClassicLogo(self.UI.GameLogo, GetClientDisplayExpansionLevel());
 end
 
 function KioskModeSplashMixin:SetMode(mode)
@@ -154,15 +154,7 @@ function NewCharacterButtonMixin:OnClick(button, down)
 	KioskModeSplashMixin:StartSession();
 
 	PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
-	KioskModeSplashMixin:SetMode("newcharacter");
-end
+ 	KioskModeSplashMixin:SetMode("highlevel");
 
-NewExpansionButtonMixin = {}
-
-function NewExpansionButtonMixin:OnClick(button, down)
-	KioskModeSplashMixin:StartSession();
-
-	PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
-	KioskModeSplashMixin:SetMode("highlevel");
 	GlueParent_SetScreen("charcreate");
 end

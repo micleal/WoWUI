@@ -14,9 +14,9 @@ local textureKitRegions = {
 	["RightIcon"] = "%s-rightIcon",
 }
 
-function UIWidgetTemplateDoubleIconAndTextMixin:Setup(widgetInfo, widgetContainer)
-	UIWidgetBaseTemplateMixin.Setup(self, widgetInfo, widgetContainer);
-	SetupTextureKitOnRegions(widgetInfo.textureKit, self, textureKitRegions, TextureKitConstants.SetVisibility);
+function UIWidgetTemplateDoubleIconAndTextMixin:Setup(widgetInfo)
+	UIWidgetBaseTemplateMixin.Setup(self, widgetInfo);
+	SetupTextureKits(widgetInfo.textureKitID, self, textureKitRegions, true);
 
 	self.Label:SetText(widgetInfo.label);
 

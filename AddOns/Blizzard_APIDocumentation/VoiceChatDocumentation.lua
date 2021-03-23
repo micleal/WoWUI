@@ -167,20 +167,6 @@ local VoiceChat =
 			},
 		},
 		{
-			Name = "GetJoinClubVoiceChannelError",
-			Type = "Function",
-
-			Arguments =
-			{
-				{ Name = "clubId", Type = "string", Nilable = false },
-			},
-
-			Returns =
-			{
-				{ Name = "errorReason", Type = "VoiceChannelErrorReason", Nilable = true },
-			},
-		},
-		{
 			Name = "GetLocalPlayerActiveChannelMemberInfo",
 			Type = "Function",
 
@@ -1032,18 +1018,6 @@ local VoiceChat =
 			},
 		},
 		{
-			Name = "VoiceChannelErrorReason",
-			Type = "Enumeration",
-			NumValues = 2,
-			MinValue = 0,
-			MaxValue = 1,
-			Fields =
-			{
-				{ Name = "Unknown", Type = "VoiceChannelErrorReason", EnumValue = 0 },
-				{ Name = "IsBattleNetChannel", Type = "VoiceChannelErrorReason", EnumValue = 1 },
-			},
-		},
-		{
 			Name = "VoiceChatStatusCode",
 			Type = "Enumeration",
 			NumValues = 25,
@@ -1085,9 +1059,9 @@ local VoiceChat =
 			{
 				{ Name = "deviceID", Type = "string", Nilable = false },
 				{ Name = "displayName", Type = "string", Nilable = false },
-				{ Name = "power", Type = "number", Nilable = false },
 				{ Name = "isActive", Type = "bool", Nilable = false },
 				{ Name = "isSystemDefault", Type = "bool", Nilable = false },
+				{ Name = "isCommsDefault", Type = "bool", Nilable = false },
 			},
 		},
 		{
@@ -1104,7 +1078,6 @@ local VoiceChat =
 				{ Name = "isActive", Type = "bool", Nilable = false },
 				{ Name = "isMuted", Type = "bool", Nilable = false },
 				{ Name = "isTransmitting", Type = "bool", Nilable = false },
-				{ Name = "isLocalProcess", Type = "bool", Nilable = false },
 				{ Name = "members", Type = "table", InnerType = "VoiceChatMember", Nilable = false },
 			},
 		},

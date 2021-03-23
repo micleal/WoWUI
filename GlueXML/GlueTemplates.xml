@@ -2,7 +2,9 @@
 ..\FrameXML\UI.xsd">
 	<Script file="GlueTemplates.lua"/>
 	<Button name="GlueCloseButton" virtual="true">
-		<Size x="32" y="32"/>
+		<Size>
+			<AbsDimension x="32" y="32"/>
+		</Size>
 		<Scripts>
 			<OnClick>
 				self:GetParent():Hide();
@@ -36,13 +38,22 @@
 	<Texture name="GluePanelButtonDisabledDownTexture" file="Interface\Buttons\UI-Panel-Button-Disabled-Down" virtual="true">
 		<TexCoords left="0" right="0.625" top="0" bottom="0.6875"/>
 	</Texture>
+	<Button name="GluePanelButtonGrayTemplate" virtual="true">
+		<NormalFont style="GlueFontHighlight"/>
+		<HighlightFont style="GlueFontHighlight"/>
+		<DisabledFont style="GlueFontDisable"/>
+		<NormalTexture inherits="GluePanelButtonDisabledTexture"/>
+		<PushedTexture inherits="GluePanelButtonDisabledDownTexture"/>
+		<DisabledTexture inherits="GluePanelButtonDisabledTexture"/>
+		<HighlightTexture inherits="GluePanelButtonHighlightTexture"/>
+	</Button>
 	<CheckButton name="GlueCheckButtonTemplate" virtual="true">
 		<Size>
 			<AbsDimension x="32" y="32"/>
 		</Size>
 		<Layers>
 			<Layer level="ARTWORK">
-				<FontString name="$parentText" inherits="GlueFontNormalSmall">
+				<FontString name="$parentText" parentKey="Text" inherits="GlueFontNormalSmall">
 					<Anchors>
 						<Anchor point="LEFT" relativePoint="RIGHT">
 							<Offset>

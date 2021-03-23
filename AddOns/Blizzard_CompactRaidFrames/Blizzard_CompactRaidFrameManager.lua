@@ -167,7 +167,7 @@ function CompactRaidFrameManager_UpdateOptionsFlowContainer(self)
 		self.displayFrame.leaderOptions:Hide();
 	end
 	
-	if ( not IsInRaid() and UnitIsGroupLeader("player") and not HasLFGRestrictions() ) then
+	if ( not IsInRaid() and UnitIsGroupLeader("player") ) then
 		FlowContainer_AddLineBreak(container);
 		FlowContainer_AddSpacer(container, 20);
 		FlowContainer_AddObject(container, self.displayFrame.convertToRaid);
@@ -204,26 +204,14 @@ function CompactRaidFrameManager_UpdateOptionsFlowContainer(self)
 	
 	--Then, we update which specific buttons are enabled.
 	
-	--Raid leaders and assistants and leaders of non-dungeon finder parties may initiate a role poll.
-	if ( IsInGroup() and not HasLFGRestrictions() and (UnitIsGroupLeader("player") or UnitIsGroupAssistant("player")) ) then
-		self.displayFrame.leaderOptions.rolePollButton:Enable();
-		self.displayFrame.leaderOptions.rolePollButton:SetAlpha(1);
-	else
-		self.displayFrame.leaderOptions.rolePollButton:Disable();
-		self.displayFrame.leaderOptions.rolePollButton:SetAlpha(0.5);
-	end
 	
 	--Any sort of leader may initiate a ready check.
 	if ( IsInGroup() and (UnitIsGroupLeader("player") or UnitIsGroupAssistant("player")) ) then
 		self.displayFrame.leaderOptions.readyCheckButton:Enable();
 		self.displayFrame.leaderOptions.readyCheckButton:SetAlpha(1);
-		self.displayFrame.leaderOptions.countdownButton:Enable(); 
-		self.displayFrame.leaderOptions.countdownButton:SetAlpha(1);
 	else
 		self.displayFrame.leaderOptions.readyCheckButton:Disable();
 		self.displayFrame.leaderOptions.readyCheckButton:SetAlpha(0.5);
-		self.displayFrame.leaderOptions.countdownButton:Disable(); 
-		self.displayFrame.leaderOptions.countdownButton:SetAlpha(0.5);
 	end
 end
 
@@ -273,34 +261,9 @@ end
 
 local usedGroups = {};
 function CompactRaidFrameManager_UpdateFilterInfo(self)
-	CompactRaidFrameManager_UpdateRoleFilterButton(self.displayFrame.filterOptions.filterRoleTank);
-	CompactRaidFrameManager_UpdateRoleFilterButton(self.displayFrame.filterOptions.filterRoleHealer);
-	CompactRaidFrameManager_UpdateRoleFilterButton(self.displayFrame.filterOptions.filterRoleDamager);
-	
 	RaidUtil_GetUsedGroups(usedGroups);
 	for i=1, MAX_RAID_GROUPS do
 		CompactRaidFrameManager_UpdateGroupFilterButton(self.displayFrame.filterOptions["filterGroup"..i], usedGroups);
-	end
-end
-
-function CompactRaidFrameManager_UpdateRoleFilterButton(button)
-	local totalAlive, totalCount = RaidInfoCounts["aliveRole"..button.role], RaidInfoCounts["totalRole"..button.role]
-	button:SetFormattedText("%s %d/%d", button.roleTexture, totalAlive, totalCount);
-	local keepGroupsTogether = CompactRaidFrameManager_GetSetting("KeepGroupsTogether");
-	keepGroupsTogether = keepGroupsTogether and keepGroupsTogether ~= "0";
-	if ( totalCount == 0 or keepGroupsTogether ) then
-		button.selectedHighlight:Hide();
-		button:Disable();
-		button:SetAlpha(0.5);
-	else
-		button:Enable();
-		button:SetAlpha(1);
-		local isFiltered = CRF_GetFilterRole(button.role)
-		if ( isFiltered ) then
-			button.selectedHighlight:Show();
-		else
-			button.selectedHighlight:Hide();
-		end
 	end
 end
 
@@ -533,7 +496,7 @@ end
 
 function CompactRaidFrameManager_AttachPartyFrames(manager)
 	PartyMemberFrame1:ClearAllPoints();
-	PartyMemberFrame1:SetPoint("TOPLEFT", manager, "TOPRIGHT", 0, -20);
+	PartyMemberFrame1:SetPoint("TOPLEFT", manager, "TOPRIGHT", 0, 12);
 end
 	
 function CompactRaidFrameManager_ResetContainerPosition()
@@ -773,7 +736,7 @@ function CRFSort_Group(token1, token2)
 	end
 end
 
-local roleValues = { MAINTANK = 1, MAINASSIST = 2, TANK = 3, HEALER = 4, DAMAGER = 5, NONE = 6 };
+local roleValues = { MAINTANK = 1, MAINASSIST = 2, NONE = 3 };
 function CRFSort_Role(token1, token2)
 	local id1, id2 = UnitInRaid(token1), UnitInRaid(token2);
 	local role1, role2;
@@ -784,8 +747,8 @@ function CRFSort_Role(token1, token2)
 		role2 = select(10, GetRaidRosterInfo(id2));
 	end
 	
-	role1 = role1 or UnitGroupRolesAssigned(token1);
-	role2 = role2 or UnitGroupRolesAssigned(token2);
+	role1 = role1 or "NONE";
+	role2 = role2 or "NONE";
 	
 	local value1, value2 = roleValues[role1], roleValues[role2];
 	if ( value1 ~= value2 ) then
@@ -819,10 +782,6 @@ local filterOptions = {
 	[7] = true,
 	[8] = true,
 	displayRoleNONE = true;
-	displayRoleTANK = true;
-	displayRoleHEALER = true;
-	displayRoleDAMAGER = true;
-	
 }
 function CRF_SetFilterRole(role, show)
 	filterOptions["displayRole"..role] = show;
@@ -851,10 +810,10 @@ function CRFFlowFilterFunc(token)
 		return true;
 	end
 	
-	local role = UnitGroupRolesAssigned(token);
+	--[[local role = UnitGroupRolesAssigned(token);
 	if ( not filterOptions["displayRole"..role] ) then
 		return false;
-	end
+	end]]
 	
 	local raidID = UnitInRaid(token);
 	if ( raidID ) then
@@ -878,12 +837,6 @@ end
 
 --Counting functions
 RaidInfoCounts = {
-	aliveRoleTANK 			= 0,
-	totalRoleTANK			= 0,
-	aliveRoleHEALER		= 0,
-	totalRoleHEALER		= 0,
-	aliveRoleDAMAGER	= 0,
-	totalRoleDAMAGER		= 0,
 	aliveRoleNONE			= 0,
 	totalRoleNONE			= 0,
 	totalCount					= 0,
@@ -906,12 +859,12 @@ function CRF_CountStuff()
 			end
 		end
 	else
-		CRF_AddToCount(UnitIsDeadOrGhost("player") , UnitGroupRolesAssigned("player"));
+		CRF_AddToCount(UnitIsDeadOrGhost("player") , "NONE");--UnitGroupRolesAssigned("player"));
 		for i=1, GetNumSubgroupMembers() do
 			local unit = "party"..i;
-			CRF_AddToCount(UnitIsDeadOrGhost(unit), UnitGroupRolesAssigned(unit));
+			CRF_AddToCount(UnitIsDeadOrGhost(unit), "NONE");--UnitGroupRolesAssigned(unit));
 		end
-	end		
+	end
 end
 
 function CRF_AddToCount(isDead, assignedRole)

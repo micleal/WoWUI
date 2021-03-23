@@ -7,20 +7,6 @@ local ActionBarFrame =
 	Functions =
 	{
 		{
-			Name = "FindFlyoutActionButtons",
-			Type = "Function",
-
-			Arguments =
-			{
-				{ Name = "flyoutID", Type = "number", Nilable = false },
-			},
-
-			Returns =
-			{
-				{ Name = "slots", Type = "table", InnerType = "number", Nilable = false },
-			},
-		},
-		{
 			Name = "FindPetActionButtons",
 			Type = "Function",
 
@@ -49,20 +35,6 @@ local ActionBarFrame =
 			},
 		},
 		{
-			Name = "GetBonusBarIndexForSlot",
-			Type = "Function",
-
-			Arguments =
-			{
-				{ Name = "slotID", Type = "number", Nilable = false },
-			},
-
-			Returns =
-			{
-				{ Name = "bonusBarIndex", Type = "number", Nilable = true },
-			},
-		},
-		{
 			Name = "GetPetActionPetBarIndices",
 			Type = "Function",
 
@@ -74,20 +46,6 @@ local ActionBarFrame =
 			Returns =
 			{
 				{ Name = "slots", Type = "table", InnerType = "number", Nilable = false },
-			},
-		},
-		{
-			Name = "HasFlyoutActionButtons",
-			Type = "Function",
-
-			Arguments =
-			{
-				{ Name = "flyoutID", Type = "number", Nilable = false },
-			},
-
-			Returns =
-			{
-				{ Name = "hasFlyoutActionButtons", Type = "bool", Nilable = false },
 			},
 		},
 		{
@@ -161,36 +119,6 @@ local ActionBarFrame =
 			},
 		},
 		{
-			Name = "IsHarmfulAction",
-			Type = "Function",
-
-			Arguments =
-			{
-				{ Name = "actionID", Type = "number", Nilable = false },
-				{ Name = "useNeutral", Type = "bool", Nilable = false },
-			},
-
-			Returns =
-			{
-				{ Name = "isHarmful", Type = "bool", Nilable = false },
-			},
-		},
-		{
-			Name = "IsHelpfulAction",
-			Type = "Function",
-
-			Arguments =
-			{
-				{ Name = "actionID", Type = "number", Nilable = false },
-				{ Name = "useNeutral", Type = "bool", Nilable = false },
-			},
-
-			Returns =
-			{
-				{ Name = "isHelpful", Type = "bool", Nilable = false },
-			},
-		},
-		{
 			Name = "IsOnBarOrSpecialBar",
 			Type = "Function",
 
@@ -202,33 +130,6 @@ local ActionBarFrame =
 			Returns =
 			{
 				{ Name = "isOnBarOrSpecialBar", Type = "bool", Nilable = false },
-			},
-		},
-		{
-			Name = "PutActionInSlot",
-			Type = "Function",
-
-			Arguments =
-			{
-				{ Name = "slotID", Type = "number", Nilable = false },
-			},
-		},
-		{
-			Name = "ShouldOverrideBarShowHealthBar",
-			Type = "Function",
-
-			Returns =
-			{
-				{ Name = "showHealthBar", Type = "bool", Nilable = false },
-			},
-		},
-		{
-			Name = "ShouldOverrideBarShowManaBar",
-			Type = "Function",
-
-			Returns =
-			{
-				{ Name = "showManaBar", Type = "bool", Nilable = false },
 			},
 		},
 		{
@@ -297,21 +198,6 @@ local ActionBarFrame =
 			Name = "UpdateBonusActionbar",
 			Type = "Event",
 			LiteralName = "UPDATE_BONUS_ACTIONBAR",
-		},
-		{
-			Name = "UpdateExtraActionbar",
-			Type = "Event",
-			LiteralName = "UPDATE_EXTRA_ACTIONBAR",
-		},
-		{
-			Name = "UpdateMultiCastActionbar",
-			Type = "Event",
-			LiteralName = "UPDATE_MULTI_CAST_ACTIONBAR",
-		},
-		{
-			Name = "UpdateOverrideActionbar",
-			Type = "Event",
-			LiteralName = "UPDATE_OVERRIDE_ACTIONBAR",
 		},
 	},
 

@@ -2,7 +2,11 @@
 ..\FrameXML\UI.xsd">
 	<Script file="StaticPopupSpecial.lua"/>
 
-	<Frame name="PetBattleQueueReadyFrame" hidden="true" parent="UIParent" frameStrata="DIALOG">
+	<Frame name="PetBattleQueueReadyFrame" inherits="BackdropTemplate" hidden="true" parent="UIParent" frameStrata="DIALOG">
+		<KeyValues>
+			<KeyValue key="backdropInfo" value="BACKDROP_DIALOG_32_32" type="global"/>
+			<KeyValue key="hideOnEscape" value="1" type="number"/>
+		</KeyValues>
 		<Size x="320" y="200"/>
 		<Layers>
 			<Layer level="ARTWORK">
@@ -21,7 +25,6 @@
 			</Layer>
 		</Layers>
 		<Frames>
-			<Frame parentKey="Border" inherits="DialogBorderTemplate"/>
 			<Button parentKey="AcceptButton" inherits="UIPanelButtonTemplate" text="ACCEPT">
 				<Size x="120" y="21"/>
 				<Anchors>
@@ -48,9 +51,6 @@
 			</Button>
 		</Frames>
 		<Scripts>
-			<OnLoad>
-				self.hideOnEscape = 1;
-			</OnLoad>
 			<OnUpdate>
 				if ( C_PetBattles.CanAcceptQueuedPVPMatch() == true ) then
 				  self.AcceptButton:Enable();
@@ -61,7 +61,10 @@
 		</Scripts>
 	</Frame>
 
-	<Frame name="PlayerReportFrameTemplate" parent="UIParent" hidden="true" frameStrata="DIALOG" mixin="PlayerReportFrameBaseMixin" virtual="true">
+	<Frame name="PlayerReportFrame" inherits="BackdropTemplate" parent="UIParent" hidden="true" frameStrata="DIALOG" mixin="PlayerReportFrameMixin">
+		<KeyValues>
+			<KeyValue key="backdropInfo" value="BACKDROP_DIALOG_32_32" type="global"/>
+		</KeyValues>
 		<Size x="344" y="224"/>
 		<Layers>
 			<Layer level="ARTWORK">
@@ -80,7 +83,6 @@
 			</Layer>
 		</Layers>
 		<Frames>
-			<Frame parentKey="Border" inherits="DialogBorderTemplate"/>
 			<Frame parentKey="Comment">
 				<Size x="286" y="80"/>
 				<Anchors>
@@ -186,9 +188,9 @@
 									<OnTextChanged>
 										ScrollingEdit_OnTextChanged(self, self:GetParent());
 										if ( self:GetText() ~= "" ) then
-										self.Fill:Hide();
+											self.Fill:Hide();
 										else
-										self.Fill:Show();
+											self.Fill:Show();
 										end
 									</OnTextChanged>
 									<OnCursorChanged function="ScrollingEdit_OnCursorChanged"/>
@@ -229,17 +231,9 @@
 			</Button>
 		</Frames>
 		<Scripts>
-			<OnLoad method="OnLoad"/>
+			<OnLoad inherit="prepend" method="OnLoad"/>
 			<OnShow method="OnShow"/>
 			<OnHide method="OnHide"/>
-		</Scripts>
-	</Frame>
-
-	<Frame name="ClubFinderReportFrame" enableMouse="true" inherits="PlayerReportFrameTemplate" mixin="ClubFinderReportFrameMixin"/>
-
-	<Frame name="PlayerReportFrame" inherits="PlayerReportFrameTemplate" mixin="PlayerReportFrameMixin">
-		<Scripts>
-			<OnEvent method="OnEvent"/>
 		</Scripts>
 	</Frame>
 </Ui>

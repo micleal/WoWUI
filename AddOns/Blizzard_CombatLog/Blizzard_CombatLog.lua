@@ -68,7 +68,7 @@ COMBATLOG_DEFAULT_COLORS = {
 };
 COMBATLOG_DEFAULT_SETTINGS = {
 	-- Settings
-	fullText = false;
+	fullText = true;
 	textMode = TEXT_MODE_A;
 	timestamp = false;
 	timestampFormat = TEXT_MODE_A_TIMESTAMP;
@@ -94,11 +94,11 @@ COMBATLOG_DEFAULT_SETTINGS = {
 	noMeleeSwingColoring = false;
 	missColoring = true;
 	braces = false;
-	unitBraces = true;
-	sourceBraces = true;
-	destBraces = true;
+	unitBraces = false;
+	sourceBraces = false;
+	destBraces = false;
 	spellBraces = false;
-	itemBraces = true;
+	itemBraces = false;
 	showHistory = true;
 	lineColorPriority = 1; -- 1 = source->dest->event, 2 = dest->source->event, 3 = event->source->dest
 	unitIcons = true;
@@ -172,6 +172,7 @@ COMBATLOG_EVENT_LIST = {
 	["SPELL_BUILDING_DAMAGE"] = true,
 	["SPELL_BUILDING_HEAL"] = true,
 	["UNIT_DISSIPATES"] = true,
+	["UNIT_LOYALTY"] = true,
 };
 
 COMBATLOG_FLAG_LIST = {
@@ -401,7 +402,7 @@ Blizzard_CombatLog_Filter_Defaults = {
 					      ["SPELL_MISSED"] = false,
 					      ["SPELL_DAMAGE"] = true,
 					      ["SPELL_HEAL"] = true,
-					      ["SPELL_ENERGIZE"] = false,
+					      ["SPELL_ENERGIZE"] = true,
 					      ["SPELL_DRAIN"] = false,
 					      ["SPELL_LEECH"] = false,
 					      ["SPELL_INSTAKILL"] = false,
@@ -423,7 +424,7 @@ Blizzard_CombatLog_Filter_Defaults = {
 					      ["SPELL_PERIODIC_MISSED"] = false,
 					      ["SPELL_PERIODIC_DAMAGE"] = true,
 					      ["SPELL_PERIODIC_HEAL"] = true,
-					      ["SPELL_PERIODIC_ENERGIZE"] = false,
+					      ["SPELL_PERIODIC_ENERGIZE"] = true,
 					      ["SPELL_PERIODIC_DRAIN"] = false,
 					      ["SPELL_PERIODIC_LEECH"] = false,
 					      ["SPELL_DISPEL_FAILED"] = false,
@@ -433,7 +434,8 @@ Blizzard_CombatLog_Filter_Defaults = {
 					      ["PARTY_KILL"] = true,
 					      ["UNIT_DIED"] = false,
 					      ["UNIT_DESTROYED"] = true,
-					      ["UNIT_DISSIPATES"] = true
+					      ["UNIT_DISSIPATES"] = true,
+						  ["UNIT_LOYALTY"] = false
 					};
 					sourceFlags = {
 						[COMBATLOG_FILTER_MINE] = true
@@ -482,7 +484,8 @@ Blizzard_CombatLog_Filter_Defaults = {
 					      ["PARTY_KILL"] = true,
 					      ["UNIT_DIED"] = true,
 					      ["UNIT_DESTROYED"] = true,
-					      ["UNIT_DISSIPATES"] = true
+					      ["UNIT_DISSIPATES"] = true,
+						  ["UNIT_LOYALTY"] = false
 					};
 					sourceFlags = nil;
 					destFlags =  {
@@ -1112,6 +1115,14 @@ do
 							Blizzard_CombatLog_MenuHelper ( checked, "ENVIRONMENTAL_DAMAGE" );
 						end;
 					};
+					[5] = {
+						text = "Loyalty";
+						checked = function() return Blizzard_CombatLog_HasEvent (Blizzard_CombatLog_CurrentSettings, "UNIT_LOYALTY"); end;
+						keepShownOnClick = true;
+						func = function ( self, arg1, arg2, checked )
+							Blizzard_CombatLog_MenuHelper ( checked, "UNIT_LOYALTY" );
+						end;
+					};
 				};
 			};
 		};
@@ -1323,15 +1334,6 @@ do
 				checked = function() return filter.missColoring; end;
 				func = function(self, arg1, arg2, checked)
 					filter.missColoring = checked;
-					Blizzard_CombatLog_QuickButton_OnClick(currentFilter)
-				end;
-				keepShownOnClick = true;
-			},
-			{
-				text = "Braces";
-				checked = function() return filter.braces; end;
-				func = function(self, arg1, arg2, checked)
-					filter.braces = checked;
 					Blizzard_CombatLog_QuickButton_OnClick(currentFilter)
 				end;
 				keepShownOnClick = true;
@@ -1686,12 +1688,10 @@ function Blizzard_CombatLog_SpellMenuClick(action, spellName, spellId, eventType
 			v.eventList[eventType] = false;
 		end
 	elseif ( action == "LINK" ) then
-		local spellLink = GetSpellLink(spellId);
-
 		if ( ChatEdit_GetActiveWindow() ) then
-			ChatEdit_InsertLink(spellLink);
+			ChatEdit_InsertLink(GetSpellLink(spellId));
 		else
-			ChatFrame_OpenChat(spellLink);
+			ChatFrame_OpenChat(GetSpellLink(spellId));
 		end
 		return;
 	end
@@ -1800,7 +1800,7 @@ local powerTypeToStringLookup =
 	[Enum.PowerType.Rage] = RAGE,
 	[Enum.PowerType.Focus] = FOCUS,
 	[Enum.PowerType.Energy] = ENERGY,
-	[Enum.PowerType.ComboPoints] = COMBO_POINTS,
+	[Enum.PowerType.Happiness] = HAPPINESS,
 	[Enum.PowerType.Runes] = RUNES,
 	[Enum.PowerType.RunicPower] = RUNIC_POWER,
 	[Enum.PowerType.SoulShards] = SOUL_SHARDS,
@@ -1809,6 +1809,7 @@ local powerTypeToStringLookup =
 	[Enum.PowerType.Maelstrom] = MAELSTROM_POWER,
 	[Enum.PowerType.Chi] = CHI_POWER,
 	[Enum.PowerType.Insanity] = INSANITY_POWER,
+	[Enum.PowerType.ComboPoints] = COMBO_POINTS,
 	[Enum.PowerType.ArcaneCharges] = ARCANE_CHARGES_POWER,
 	[Enum.PowerType.Fury] = FURY,
 	[Enum.PowerType.Pain] = PAIN,
@@ -1823,8 +1824,8 @@ local function CombatLog_String_PowerType(powerType, amount, alternatePowerType)
 	end
 
 	if ( powerType == alternatePowerEnumValue and alternatePowerType ) then
-		local name, tooltip, cost = GetUnitPowerBarStringsByID(alternatePowerType);
-		return cost; --cost could be nil if we didn't get the alternatePowerType for some reason (e.g. target out of AOI)
+		local costName = select(13, GetAlternatePowerInfoByID(alternatePowerType));
+		return costName; --costName could be nil if we didn't get the alternatePowerType for some reason (e.g. target out of AOI)
 	end
 
 	-- Previous behavior was returning nil if powerType didn't match one of the explicitly checked types
@@ -2140,12 +2141,10 @@ function CombatLog_OnEvent(filterSettings, timestamp, event, hideCaster, sourceG
 		spellName = ACTION_SWING;
 
 		-- Miss type
-		missType, isOffHand, amountMissed, critical = ...;
+		missType, isOffHand, amountMissed = ...;
 
 		-- Result String
-		if ( missType == "ABSORB" ) then
-			resultStr = CombatLog_String_DamageResultString( resisted, blocked, amountMissed, critical, glancing, crushing, overhealing, textMode, spellId, overkill, overEnergize );
-		elseif( missType == "RESIST" or missType == "BLOCK" ) then
+		if( missType == "RESIST" or missType == "BLOCK" or missType == "ABSORB" ) then
 			resultStr = format(_G["TEXT_MODE_A_STRING_RESULT_"..missType], amountMissed);
 		else
 			resultStr = _G["ACTION_SWING_MISSED_"..missType];
@@ -2180,13 +2179,11 @@ function CombatLog_OnEvent(filterSettings, timestamp, event, hideCaster, sourceG
 			end
 		elseif ( event == "SPELL_MISSED" ) then
 			-- Miss type
-			missType,  isOffHand, amountMissed, critical = select(4, ...);
+			missType,  isOffHand, amountMissed = select(4, ...);
 
 			resultEnabled = true;
 			-- Result String
-			if ( missType == "ABSORB" ) then
-				resultStr = CombatLog_String_DamageResultString( resisted, blocked, amountMissed, critical, glancing, crushing, overhealing, textMode, spellId, overkill, overEnergize );
-			elseif( missType == "RESIST" or missType == "BLOCK" ) then
+			if( missType == "RESIST" or missType == "BLOCK" or missType == "ABSORB" ) then
 				if ( amountMissed ~= 0 ) then
 					resultStr = format(_G["TEXT_MODE_A_STRING_RESULT_"..missType], amountMissed);
 				else
@@ -2243,7 +2240,7 @@ function CombatLog_OnEvent(filterSettings, timestamp, event, hideCaster, sourceG
 
 			if ( event == "SPELL_PERIODIC_MISSED" ) then
 				-- Miss type
-				missType, isOffHand, amountMissed, critical = select(4, ...);
+				missType, isOffHand, amountMissed = select(4, ...);
 
 				-- Result String
 				if ( missType == "ABSORB" ) then
@@ -2603,14 +2600,11 @@ function CombatLog_OnEvent(filterSettings, timestamp, event, hideCaster, sourceG
 			spellName = ACTION_RANGED;
 
 			-- Miss type
-			missType, isOffHand, amountMissed, critical = select(4,...);
+			missType, isOffHand, amountMissed = select(4,...);
 
 			-- Result String
-			if ( missType == "ABSORB" ) then
-				resultStr = CombatLog_String_DamageResultString( resisted, blocked, amountMissed, critical, glancing, crushing, overhealing, textMode, spellId, overkill, overEnergize );
-			elseif( missType == "RESIST" or missType == "BLOCK" ) then
+			if( missType == "RESIST" or missType == "BLOCK" or missType == "ABSORB" ) then
 				resultStr = format(_G["TEXT_MODE_A_STRING_RESULT_"..missType], amountMissed);
-
 			else
 				resultStr = _G["ACTION_RANGE_MISSED_"..missType];
 			end
@@ -2744,6 +2738,14 @@ function CombatLog_OnEvent(filterSettings, timestamp, event, hideCaster, sourceG
 		if ( overkill > 0 ) then
 			amount = amount - overkill;
 		end
+	elseif ( event == "UNIT_LOYALTY" ) then
+		local gained = ...
+		if ( gained == 1 ) then
+			resultStr = _G["PET_LOYALTY_GAIN"];
+		else
+			resultStr = _G["PET_LOYALTY_LOSS"];
+		end
+		formatString = "%6$s";
 	end
 
 	-- Throw away all of the assembled strings and just grab a premade one
@@ -3393,6 +3395,12 @@ function Blizzard_CombatLog_QuickButtonFrame_OnLoad(self)
 		COMBATLOG:UnregisterEvent("COMBAT_LOG_EVENT");
 		return hide and hide(self)
 	end)
+
+	-- Disable Combat Log Hyperlinks
+	COMBATLOG:SetScript("OnHyperlinkClick", function(self)
+		return;
+	end)
+
 	if ( COMBATLOG:IsShown() ) then
 		COMBATLOG:RegisterEvent("COMBAT_LOG_EVENT");
 	end
@@ -3489,8 +3497,7 @@ function SetItemRef(link, text, button, chatFrame)
 
 		if ( IsModifiedClick("CHATLINK") ) then
 			if ( spellId > 0 ) then
-				local spellLink = GetSpellLink(spellId, glyphId);
-				if ( ChatEdit_InsertLink(spellLink) ) then
+				if ( ChatEdit_InsertLink(GetSpellLink(spellId, glyphId)) ) then
 					return;
 				end
 			else

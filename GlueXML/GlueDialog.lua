@@ -195,18 +195,7 @@ GlueDialogTypes["CONFIRM_PAID_SERVICE"] = {
 	OnAccept = function()
 		-- need to get desired faction in case of pandaren doing faction change to another pandaren
 		-- this will be nil in any other case
-
-		local noNPE = false;
-
-		-- TODO: Remove once the old Char Create is dead
-		if CharacterCreate_Old then
-			C_CharacterCreation.CreateCharacter(CharacterCreateNameEdit:GetText(), noNPE, PandarenFactionButtons_GetSelectedFaction());
-		else
-			C_CharacterCreation.CreateCharacter(CharacterCreateFrame:GetSelectedName(), noNPE, CharacterCreateFrame:GetCreateCharacterFaction());
-		end
-	end,
-	OnCancel = function()
-		CharacterCreateFrame:UpdateForwardButton();
+		C_CharacterCreation.CreateCharacter(CharacterCreateNameEdit:GetText(), PandarenFactionButtons_GetSelectedFaction());
 	end,
 }
 
@@ -232,13 +221,15 @@ GlueDialogTypes["QUEUED_NORMAL"] = {
 
 GlueDialogTypes["QUEUED_WITH_FCM"] = {
 	text = "",
-	button1 = CHANGE_REALM,
-	button2 = QUEUE_FCM_BUTTON,
+	button1 = QUEUE_FCM_BUTTON,
+	button2 = CHANGE_REALM,
+	darken = true,
 	OnAccept = function()
-		C_RealmList.RequestChangeRealmList();
+		C_StoreSecure.GetPurchaseList();
+		ToggleStoreUI();
 	end,
 	OnCancel = function()
-		LaunchURL(QUEUE_FCM_URL)
+		C_RealmList.RequestChangeRealmList();
 	end,
 }
 
@@ -256,6 +247,18 @@ GlueDialogTypes["CHARACTER_BOOST_NO_CHARACTERS_WARNING"] = {
 
 	OnCancel = function ()
 		CharacterUpgradePopup_BeginCharacterUpgradeFlow(GlueDialog.data);
+	end,
+}
+
+GlueDialogTypes["ADVANCED_CHARACTER_CREATION_WARNING"] = {
+	text = "",
+	button1 = ADVANCED_CHARACTER_CREATION_WARNING_DIALOG_ACCEPT_WARNING,
+	button2 = ADVANCED_CHARACTER_CREATION_WARNING_DIALOG_IGNORE_WARNING,
+	displayVertical = true,
+	ignoreKeys = true,
+
+	OnCancel = function ()
+		CharacterClass_SelectClass(GlueDialog.data, true);
 	end,
 }
 
@@ -364,7 +367,28 @@ function GlueDialog_Show(which, text, data)
 	else
 		GlueDialogBackground:SetPoint("CENTER");
 	end
-	
+
+	-- Dialog background
+	if (dialogInfo.darken) then
+		GlueDialogBackground:SetBackdrop({
+			bgFile = "Interface/DialogFrame/UI-DialogBox-Background-Dark",
+			edgeFile = "Interface/DialogFrame/UI-DialogBox-Border",
+			tile = true,
+			tileSize = 32,
+			edgeSize = 32,
+			insets = { left = 11, right = 12, top = 12, bottom = 11 },
+		});
+	else
+		GlueDialogBackground:SetBackdrop({
+			bgFile = "Interface/DialogFrame/UI-DialogBox-Background",
+			edgeFile = "Interface/DialogFrame/UI-DialogBox-Border",
+			tile = true,
+			tileSize = 32,
+			edgeSize = 32,
+			insets = { left = 11, right = 12, top = 12, bottom = 11 },
+		});
+	end
+
 	GlueDialog.data = data;
 	local glueText;
 	if ( dialogInfo.html ) then
@@ -396,13 +420,13 @@ function GlueDialog_Show(which, text, data)
 		GlueDialogButton3:ClearAllPoints();
 
 		if ( dialogInfo.displayVertical ) then
-			GlueDialogButton3:SetPoint("BOTTOM", "GlueDialogBackground", "BOTTOM", 0, 25);
-			GlueDialogButton2:SetPoint("BOTTOM", "GlueDialogButton3", "TOP", 0, 10);
-			GlueDialogButton1:SetPoint("BOTTOM", "GlueDialogButton2", "TOP", 0, 10);
+			GlueDialogButton3:SetPoint("BOTTOM", "GlueDialogBackground", "BOTTOM", 0, 16);
+			GlueDialogButton2:SetPoint("BOTTOM", "GlueDialogButton3", "TOP", 0, 0);
+			GlueDialogButton1:SetPoint("BOTTOM", "GlueDialogButton2", "TOP", 0, 0);
 		else
-			GlueDialogButton1:SetPoint("BOTTOMLEFT", "GlueDialogBackground", "BOTTOMLEFT", 75, 25);
-			GlueDialogButton2:SetPoint("LEFT", "GlueDialogButton1", "RIGHT", 15, 0);
-			GlueDialogButton3:SetPoint("LEFT", "GlueDialogButton2", "RIGHT", 15, 0);
+			GlueDialogButton1:SetPoint("BOTTOMLEFT", "GlueDialogBackground", "BOTTOMLEFT", 60, 16);
+			GlueDialogButton2:SetPoint("LEFT", "GlueDialogButton1", "RIGHT", -8, 0);
+			GlueDialogButton3:SetPoint("LEFT", "GlueDialogButton2", "RIGHT", -8, 0);
 		end
 
 		GlueDialogButton1:SetText(dialogInfo.button1);
@@ -416,11 +440,11 @@ function GlueDialog_Show(which, text, data)
 		GlueDialogButton2:ClearAllPoints();
 
 		if ( dialogInfo.displayVertical ) then
-			GlueDialogButton2:SetPoint("BOTTOM", "GlueDialogBackground", "BOTTOM", 0, 25);
-			GlueDialogButton1:SetPoint("BOTTOM", "GlueDialogButton2", "TOP", 0, 10);
+			GlueDialogButton2:SetPoint("BOTTOM", "GlueDialogBackground", "BOTTOM", 0, 16);
+			GlueDialogButton1:SetPoint("BOTTOM", "GlueDialogButton2", "TOP", 0, 0);
 		else
-			GlueDialogButton1:SetPoint("BOTTOMRIGHT", "GlueDialogBackground", "BOTTOM", -6, 25);
-			GlueDialogButton2:SetPoint("LEFT", "GlueDialogButton1", "RIGHT", 15, 0);
+			GlueDialogButton1:SetPoint("BOTTOMRIGHT", "GlueDialogBackground", "BOTTOM", -6, 16);
+			GlueDialogButton2:SetPoint("LEFT", "GlueDialogButton1", "RIGHT", 13, 0);
 		end
 
 		GlueDialogButton1:SetText(dialogInfo.button1);
@@ -430,7 +454,7 @@ function GlueDialog_Show(which, text, data)
 		GlueDialogButton3:Hide();
 	elseif ( dialogInfo.button1 ) then
 		GlueDialogButton1:ClearAllPoints();
-		GlueDialogButton1:SetPoint("BOTTOM", "GlueDialogBackground", "BOTTOM", 0, 25);
+		GlueDialogButton1:SetPoint("BOTTOM", "GlueDialogBackground", "BOTTOM", 0, 16);
 		GlueDialogButton1:SetText(dialogInfo.button1);
 		GlueDialogButton1:Show();
 		GlueDialogButton2:Hide();
@@ -493,7 +517,7 @@ function GlueDialog_Show(which, text, data)
 		local backgroundWidth = math.max(GlueDialogButton1:GetWidth(), textWidth);
 		GlueDialogBackground:SetWidth(backgroundWidth + borderPadding);
 	elseif ( dialogInfo.button3 ) then
-		local displayWidth = 75 + GlueDialogButton1:GetWidth() + 15 + GlueDialogButton2:GetWidth() + 15 + GlueDialogButton3:GetWidth() + 75;
+		local displayWidth = 45 + GlueDialogButton1:GetWidth() + 8 + GlueDialogButton2:GetWidth() + 8 + GlueDialogButton3:GetWidth() + 45;
 		GlueDialogBackground:SetWidth(displayWidth);
 		GlueDialogText:SetWidth(displayWidth - 40);
 	end
@@ -510,11 +534,11 @@ function GlueDialog_Show(which, text, data)
 	local displayHeight = 16 + textHeight;
 	if( dialogInfo.displayVertical ) then
 		if ( dialogInfo.button1 ) then
-			displayHeight = displayHeight + 25 + GlueDialogButton1:GetHeight() + 25;
+			displayHeight = 16 + displayHeight + 8 + GlueDialogButton1:GetHeight();
 			if ( dialogInfo.button2 ) then
-				displayHeight = displayHeight + 10 + GlueDialogButton2:GetHeight();
+				displayHeight = displayHeight + 8 + GlueDialogButton2:GetHeight();
 				if ( dialogInfo.button3 ) then
-					displayHeight = displayHeight + 10 + GlueDialogButton3:GetHeight();
+					displayHeight = displayHeight + 8 + GlueDialogButton3:GetHeight();
 				end
 			end
 		end
@@ -524,13 +548,13 @@ function GlueDialog_Show(which, text, data)
 		end
 	else
 		if ( dialogInfo.button1 ) then
-			displayHeight = displayHeight + 13 + GlueDialogButton1:GetHeight() + 25;
+			displayHeight = displayHeight + 8 + GlueDialogButton1:GetHeight() + 16;
 		else
-			displayHeight = displayHeight + 25;
+			displayHeight = displayHeight + 16;
 		end
 
 		if ( dialogInfo.hasEditBox ) then
-			displayHeight = displayHeight + 13 + GlueDialogEditBox:GetHeight();
+			displayHeight = displayHeight + 8 + GlueDialogEditBox:GetHeight();
 		end
 
 		if ( dialogInfo.spinner)  then
@@ -656,11 +680,4 @@ function GlueDialog_OnKeyDown(self, key)
 			PlaySound(info.hideSound);
 		end
 	end
-end
-
-GlueAnnouncementDialogMixin = {}
-
-function GlueAnnouncementDialogMixin:OnCloseClick()
-	BaseNineSliceDialogMixin.OnCloseClick(self);
-	CharacterSelect_CheckDialogStates();
 end

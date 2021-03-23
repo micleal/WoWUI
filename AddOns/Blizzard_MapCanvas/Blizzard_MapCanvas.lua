@@ -1,11 +1,7 @@
-MapCanvasMixin = CreateFromMixins(CallbackRegistryMixin);
-
-MapCanvasMixin.MouseAction = { Up = 1, Down = 2, Click = 3 };
+MapCanvasMixin = CreateFromMixins(CallbackRegistryBaseMixin);
 
 function MapCanvasMixin:OnLoad()
-	CallbackRegistryMixin.OnLoad(self);
-	self:SetUndefinedEventsAllowed(true);
-
+	CallbackRegistryBaseMixin.OnLoad(self);
 	self.detailLayerPool = CreateFramePool("FRAME", self:GetCanvas(), "MapCanvasDetailLayerTemplate");
 	self.dataProviders = {};
 	self.dataProviderEventsCount = {};
@@ -17,8 +13,6 @@ function MapCanvasMixin:OnLoad()
 	self.pinFrameLevelsManager = CreateFromMixins(MapCanvasPinFrameLevelsManagerMixin);
 	self.pinFrameLevelsManager:Initialize();
 	self.mouseClickHandlers = {};
-	self.globalPinMouseActionHandlers = {};
-	self.cursorHandlers = {};
 
 	self:EvaluateLockReasons();
 
@@ -27,29 +21,13 @@ end
 
 function MapCanvasMixin:OnUpdate()
 	self:UpdatePinNudging();
-	self:ProcessCursorHandlers();
 end
 
 function MapCanvasMixin:SetMapID(mapID)
-	if Kiosk.IsEnabled() and KioskFrame:HasWhitelistedMaps() then
-		local mapIDs = KioskFrame:GetWhitelistedMapIDs();
-		if not tContains(mapIDs, mapID) then
-			if not self.mapID then
-				-- Initialize to an allowed map and assert. Using whitelisted maps is only
-				-- suitable if we know exactly the maps the player should be in.
-				assert(false, "Map ID "..mapID.." is not amongst the whitelisted maps.");
-				mapID = mapIDs[1];
-			else
-				-- Not in our list, so don't change the map.
-				return;
-			end;
-		end
-	end
-
 	local mapArtID = C_Map.GetMapArtID(mapID) -- phased map art may be different for the same mapID
 	if self.mapID ~= mapID or self.mapArtID ~= mapArtID then
 		self.areDetailLayersDirty = true;
-		self.mapID = mapID;
+		self.mapID = mapID; 
 		self.mapArtID = mapArtID;
 		self.expandedMapInsetsByMapID = {};
 		self.ScrollContainer:SetMapID(mapID);
@@ -65,10 +43,7 @@ function MapCanvasMixin:OnFrameSizeChanged()
 end
 
 function MapCanvasMixin:GetMapID()
-	-- normally the mapID is set in OnShow, however if the player has never opened the quest log or the map, and then
-	-- hides the UI, and while the UI is hidden opens the quest log, mapID will be nil and we get a lua error.
-	-- under these very rare circumstances, dig out the diplayable mapID.
-	return self.mapID or MapUtil.GetDisplayableMapForPlayer();
+	return self.mapID;
 end
 
 function MapCanvasMixin:SetMapInsetPool(mapInsetPool)
@@ -188,7 +163,7 @@ do
 		self.ScrollContainer:MarkCanvasDirty();
 		pin:Show();
 		pin:OnAcquired(...);
-
+		
 		return pin;
 	end
 end
@@ -208,7 +183,7 @@ function MapCanvasMixin:RemovePin(pin)
 	if pin:GetNudgeSourceRadius() > 0 then
 		self.pinNudgingDirty = true;
 	end
-
+	
 	self.pinPools[pin.pinTemplate]:Release(pin);
 	self.ScrollContainer:MarkCanvasDirty();
 end
@@ -319,7 +294,7 @@ end
 function SquaredDistanceBetweenPoints(firstX, firstY, secondX, secondY)
 	local xDiff = firstX - secondX;
 	local yDiff = firstY - secondY;
-
+	
 	return xDiff * xDiff + yDiff * yDiff;
 end
 
@@ -331,18 +306,18 @@ function MapCanvasMixin:CalculatePinNudging(targetPin)
 			if targetPin ~= sourcePin and not sourcePin:IgnoresNudging() and sourcePin:GetNudgeSourceRadius() > 0 then
 				local otherNormalizedX, otherNormalizedY = sourcePin:GetPosition();
 				local distanceSquared = SquaredDistanceBetweenPoints(normalizedX, normalizedY, otherNormalizedX, otherNormalizedY);
-
+				
 				local nudgeFactor = targetPin:GetNudgeTargetFactor() * sourcePin:GetNudgeSourceRadius();
 				if distanceSquared < nudgeFactor * nudgeFactor then
 					local distance = math.sqrt(distanceSquared);
-
+					
 					-- Avoid divide by zero: just push it right.
 					if distanceSquared == 0 then
 						targetPin:SetNudgeVector(sourcePin:GetNudgeSourceZoomedOutMagnitude(), sourcePin:GetNudgeSourceZoomedInMagnitude(), 1, 0);
 					else
 						targetPin:SetNudgeVector(sourcePin:GetNudgeSourceZoomedOutMagnitude(), sourcePin:GetNudgeSourceZoomedInMagnitude(), (normalizedX - otherNormalizedX) / distance, (normalizedY - otherNormalizedY) / distance);
 					end
-
+					
 					targetPin:SetNudgeFactor(1 - (distance / nudgeFactor));
 					break; -- This is non-exact: each target pin only gets pushed by one source pin.
 				end
@@ -355,20 +330,17 @@ function MapCanvasMixin:UpdatePinNudging()
 	if not self.pinNudgingDirty and #self.pinsToNudge == 0 then
 		return;
 	end
-
+	
 	if self.pinNudgingDirty then
 		for targetPin in self:EnumerateAllPins() do
 			self:CalculatePinNudging(targetPin);
 		end
 	else
 		for _, targetPin in ipairs(self.pinsToNudge) do
-			-- It's possible this pin was unattached before this update had a chance to run.
-			if targetPin:GetMap() == self then
-				self:CalculatePinNudging(targetPin);
-			end
+			self:CalculatePinNudging(targetPin);
 		end
 	end
-
+	
 	self.pinNudgingDirty = false;
 	self.pinsToNudge = {};
 end
@@ -386,7 +358,7 @@ function MapCanvasMixin:RefreshDebugAreaTriggers()
 		self.debugAreaTriggerPool = CreateTexturePool(self:GetCanvas(), "OVERLAY", 7, "MapCanvasDebugTriggerAreaTemplate");
 		self.debugAreaTriggerColors = {};
 	end
-
+	
 	self.debugAreaTriggerPool:ReleaseAll();
 
 	local canvas = self:GetCanvas();
@@ -410,11 +382,6 @@ function MapCanvasMixin:SetDebugAreaTriggersEnabled(enabled)
 	self.ScrollContainer:MarkAreaTriggersDirty();
 end
 
-function MapCanvasMixin:ForceRefreshDetailLayers()
-	self.areDetailLayersDirty = true;
-	self:RefreshDetailLayers();
-end
-
 function MapCanvasMixin:RefreshDetailLayers()
 	if not self.areDetailLayersDirty then return end;
 	self.detailLayerPool:ReleaseAll();
@@ -423,7 +390,7 @@ function MapCanvasMixin:RefreshDetailLayers()
 	for layerIndex, layerInfo in ipairs(layers) do
 		local detailLayer = self.detailLayerPool:Acquire();
 		detailLayer:SetAllPoints(self:GetCanvas());
-		detailLayer:SetMapAndLayer(self.mapID, layerIndex, self);
+		detailLayer:SetMapAndLayer(self.mapID, layerIndex);
 		detailLayer:SetGlobalAlpha(self:GetGlobalAlpha());
 		detailLayer:Show();
 	end
@@ -502,14 +469,14 @@ function MapCanvasMixin:ApplyPinPosition(pin, normalizedX, normalizedY, insetInd
 		if normalizedX and normalizedY then
 			local x = normalizedX;
 			local y = normalizedY;
-
+			
 			local nudgeVectorX, nudgeVectorY = pin:GetNudgeVector();
 			if nudgeVectorX and nudgeVectorY then
 				local finalNudgeFactor = pin:GetNudgeFactor() * pin:GetNudgeTargetFactor() * pin:GetNudgeZoomFactor();
 				x = normalizedX + nudgeVectorX * finalNudgeFactor;
 				y = normalizedY + nudgeVectorY * finalNudgeFactor;
 			end
-
+			
 			local canvas = self:GetCanvas();
 			local scale = pin:GetScale();
 			pin:SetParent(canvas);
@@ -609,10 +576,6 @@ end
 
 function MapCanvasMixin:ResetZoom()
 	self.ScrollContainer:ResetZoom();
-end
-
-function MapCanvasMixin:InstantPanAndZoom(scale, x, y, ignoreScaleRatio)
-	self.ScrollContainer:InstantPanAndZoom(scale, x, y, ignoreScaleRatio);
 end
 
 function MapCanvasMixin:IsAtMaxZoom()
@@ -769,22 +732,23 @@ function MapCanvasMixin:NavigateToCursor()
 	end
 end
 
-local function PrioritySorter(left, right)
-	return left.priority > right.priority;
-end
-
 -- Add a function that will be checked when the canvas is clicked
 -- If the function returns true then handling will stop
 -- A priority can optionally be specified, higher priority values will be called first
-function MapCanvasMixin:AddCanvasClickHandler(handler, priority)
-	table.insert(self.mouseClickHandlers, { handler = handler, priority = priority or 0 });
-	table.sort(self.mouseClickHandlers, PrioritySorter);
+do
+	local function PrioritySorter(left, right)
+		return left.priority > right.priority;
+	end
+	function MapCanvasMixin:AddCanvasClickHandler(handler, priority)
+		table.insert(self.mouseClickHandlers, { handler = handler, priority = priority or 0 });
+		table.sort(self.mouseClickHandlers, PrioritySorter);
+	end
 end
 
 function MapCanvasMixin:RemoveCanvasClickHandler(handler, priority)
 	for i, handlerInfo in ipairs(self.mouseClickHandlers) do
 		if handlerInfo.handler == handler and (not priority or handlerInfo.priority == priority) then
-			table.remove(self.mouseClickHandlers, i);
+			table.remove(i);
 			break;
 		end
 	end
@@ -798,68 +762,6 @@ function MapCanvasMixin:ProcessCanvasClickHandlers(button, cursorX, cursorY)
 		end
 	end
 	return false;
-end
-
--- Add a function that will be checked when any pin is clicked
--- If the function returns true then handling will stop
--- A priority can optionally be specified, higher priority values will be called first
-function MapCanvasMixin:AddGlobalPinMouseActionHandler(handler, priority)
-	table.insert(self.globalPinMouseActionHandlers, { handler = handler, priority = priority or 0 });
-	table.sort(self.globalPinMouseActionHandlers, PrioritySorter);
-end
-
-function MapCanvasMixin:RemoveGlobalPinMouseActionHandler(handler, priority)
-	for i, handlerInfo in ipairs(self.globalPinMouseActionHandlers) do
-		if handlerInfo.handler == handler and (not priority or handlerInfo.priority == priority) then
-			table.remove(self.globalPinMouseActionHandlers, i);
-			break;
-		end
-	end
-end
-
-function MapCanvasMixin:ProcessGlobalPinMouseActionHandlers(mouseAction, button)
-	for i, handlerInfo in ipairs(self.globalPinMouseActionHandlers) do
-		local success, stopChecking = xpcall(handlerInfo.handler, CallErrorHandler, self, mouseAction, button);
-		if success and stopChecking then
-			return true;
-		end
-	end
-	return false;
-end
-
-function MapCanvasMixin:AddCursorHandler(handler, priority)
-	table.insert(self.cursorHandlers, { handler = handler, priority = priority or 0 });
-	table.sort(self.cursorHandlers, PrioritySorter);
-end
-
-function MapCanvasMixin:RemoveCursorHandler(handler, priority)
-	for i, handlerInfo in ipairs(self.cursorHandlers) do
-		if handlerInfo.handler == handler and (not priority or handlerInfo.priority == priority) then
-			table.remove(self.cursorHandlers, i);
-			break;
-		end
-	end
-end
-
-function MapCanvasMixin:ProcessCursorHandlers()
-	local focus = GetMouseFocus();
-	if focus then
-		-- pins have a .owningMap, our pins should be pointing to us
-		if focus == self.ScrollContainer or focus.owningMap == self then
-			for i, handlerInfo in ipairs(self.cursorHandlers) do
-				local success, cursor = xpcall(handlerInfo.handler, CallErrorHandler, self);
-				if success and cursor then
-					self.lastCursor = cursor;
-					SetCursor(cursor);
-					return;
-				end
-			end
-		end
-	end
-	if self.lastCursor then
-		self.lastCursor = nil;
-		ResetCursor();
-	end
 end
 
 function MapCanvasMixin:GetGlobalPinScale()
@@ -887,68 +789,6 @@ function MapCanvasMixin:SetGlobalAlpha(globalAlpha)
 		end
 		for dataProvider in pairs(self.dataProviders) do
 			dataProvider:OnGlobalAlphaChanged();
-		end
-	end
-end
-
-function MapCanvasMixin:SetMaskTexture(maskTexture)
-	if self.maskTexture then
-		for texture, value in pairs(self.maskableTextures) do
-			self.maskableTextures[texture] = false;
-			texture:RemoveMaskTexture(self.maskTexture);
-		end
-	end
-	self.maskTexture = maskTexture;
-	if self.maskableTextures then
-		self:RefreshMaskableTextures();
-	else
-		self.maskableTextures = { };
-	end
-end
-
-function MapCanvasMixin:GetMaskTexture()
-	return self.maskTexture;
-end
-
-function MapCanvasMixin:SetUseMaskTexture(useMaskTexture)
-	if not self:GetMaskTexture() then
-		error("Must have a mask texture");
-	end
-	self.useMaskTexture = useMaskTexture;
-	self:RefreshMaskableTextures();
-end
-
-function MapCanvasMixin:GetUseMaskTexture()
-	return not not self.useMaskTexture;
-end
-
-function MapCanvasMixin:AddMaskableTexture(texture)
-	local maskTexture = self:GetMaskTexture();
-	if not maskTexture then
-		return;
-	end
-	if self.maskableTextures[texture] ~= nil then
-		return;
-	end
-
-	local useMaskTexture = self:GetUseMaskTexture();
-	self.maskableTextures[texture] = useMaskTexture;
-	if useMaskTexture then
-		texture:AddMaskTexture(maskTexture);
-	end
-end
-
-function MapCanvasMixin:RefreshMaskableTextures()
-	local useMaskTexture = self:GetUseMaskTexture();
-	local maskTexture = self:GetMaskTexture();
-	for texture, value in pairs(self.maskableTextures) do
-		if value ~= useMaskTexture then
-			self.maskableTextures[texture] = useMaskTexture;
-			if useMaskTexture then
-				texture:AddMaskTexture(maskTexture);
-			else
-				texture:RemoveMaskTexture(maskTexture);
-			end
 		end
 	end
 end

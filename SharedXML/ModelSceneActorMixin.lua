@@ -76,14 +76,6 @@ function ModelSceneActorMixin:GetOnSizeChangedCallback()
 	return self.onSizeChangedCallback;
 end
 
-function ModelSceneActorMixin:SetOnModelLoadedCallback(onModelLoadedCallback)
-	self.onModelLoadedCallback = onModelLoadedCallback;
-end
-
-function ModelSceneActorMixin:GetOnModelLoadedCallback()
-	return self.onModelLoadedCallback;
-end
-
 function ModelSceneActorMixin:SetNormalizedScaleAggressiveness(normalizedScaleAggressiveness)
 	if self.normalizedScaleAggressiveness ~= normalizedScaleAggressiveness then
 		self.normalizedScaleAggressiveness = normalizedScaleAggressiveness;
@@ -92,7 +84,7 @@ function ModelSceneActorMixin:SetNormalizedScaleAggressiveness(normalizedScaleAg
 end
 
 function ModelSceneActorMixin:GetNormalizedScaleAggressiveness()
-	return self.normalizedScaleAggressiveness or 0;
+	return self.normalizedScaleAggressiveness;
 end
 
 function ModelSceneActorMixin:SetRequestedScale(requestedScale)
@@ -134,7 +126,6 @@ end
 -- "private" methods
 function ModelSceneActorMixin:OnReleased()
 	self:SetOnSizeChangedCallback(nil);
-	self:SetOnModelLoadedCallback(nil);
 end
 
 function ModelSceneActorMixin:OnUpdate()
@@ -143,10 +134,6 @@ end
 
 function ModelSceneActorMixin:OnModelLoaded()
 	self:MarkScaleDirty();
-
-	if self.onModelLoadedCallback then
-		self.onModelLoadedCallback(self);
-	end
 end
 
 function ModelSceneActorMixin:UpdateScale()

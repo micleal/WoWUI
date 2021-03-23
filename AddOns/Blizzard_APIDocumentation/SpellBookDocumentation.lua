@@ -6,43 +6,6 @@ local SpellBook =
 
 	Functions =
 	{
-		{
-			Name = "ContainsAnyDisenchantSpell",
-			Type = "Function",
-
-			Returns =
-			{
-				{ Name = "contains", Type = "bool", Nilable = false },
-			},
-		},
-		{
-			Name = "GetSkillLineIndexByID",
-			Type = "Function",
-
-			Arguments =
-			{
-				{ Name = "skillLineID", Type = "number", Nilable = false },
-			},
-
-			Returns =
-			{
-				{ Name = "skillIndex", Type = "number", Nilable = true },
-			},
-		},
-		{
-			Name = "IsSpellDisabled",
-			Type = "Function",
-
-			Arguments =
-			{
-				{ Name = "spellID", Type = "number", Nilable = false },
-			},
-
-			Returns =
-			{
-				{ Name = "disabled", Type = "bool", Nilable = false },
-			},
-		},
 	},
 
 	Events =
@@ -83,28 +46,6 @@ local SpellBook =
 			Payload =
 			{
 				{ Name = "totemSlot", Type = "number", Nilable = false },
-			},
-		},
-		{
-			Name = "SpellFlyoutUpdate",
-			Type = "Event",
-			LiteralName = "SPELL_FLYOUT_UPDATE",
-			Payload =
-			{
-				{ Name = "flyoutID", Type = "number", Nilable = true },
-				{ Name = "spellID", Type = "number", Nilable = true },
-				{ Name = "isLearned", Type = "bool", Nilable = true },
-			},
-		},
-		{
-			Name = "SpellPushedToActionbar",
-			Type = "Event",
-			LiteralName = "SPELL_PUSHED_TO_ACTIONBAR",
-			Payload =
-			{
-				{ Name = "spellID", Type = "number", Nilable = false },
-				{ Name = "slot", Type = "number", Nilable = false },
-				{ Name = "page", Type = "number", Nilable = false },
 			},
 		},
 		{

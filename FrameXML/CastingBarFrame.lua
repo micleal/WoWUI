@@ -1,6 +1,7 @@
 CASTING_BAR_ALPHA_STEP = 0.05;
 CASTING_BAR_FLASH_STEP = 0.2;
 CASTING_BAR_HOLD_TIME = 1;
+CASTING_BAR_PLACEHOLDER_FILE_ID = 136235;
 
 function CastingBarFrame_OnLoad(self, unit, showTradeSkills, showShield)
 	CastingBarFrame_SetStartCastColor(self, 1.0, 0.7, 0.0);
@@ -75,8 +76,6 @@ function CastingBarFrame_SetUnit(self, unit, showTradeSkills, showShield)
 			self:RegisterEvent("UNIT_SPELLCAST_CHANNEL_START");
 			self:RegisterEvent("UNIT_SPELLCAST_CHANNEL_UPDATE");
 			self:RegisterEvent("UNIT_SPELLCAST_CHANNEL_STOP");
-			self:RegisterEvent("UNIT_SPELLCAST_INTERRUPTIBLE");
-			self:RegisterEvent("UNIT_SPELLCAST_NOT_INTERRUPTIBLE");
 			self:RegisterEvent("PLAYER_ENTERING_WORLD");
 			self:RegisterUnitEvent("UNIT_SPELLCAST_START", unit);
 			self:RegisterUnitEvent("UNIT_SPELLCAST_STOP", unit);
@@ -89,8 +88,6 @@ function CastingBarFrame_SetUnit(self, unit, showTradeSkills, showShield)
 			self:UnregisterEvent("UNIT_SPELLCAST_CHANNEL_START");
 			self:UnregisterEvent("UNIT_SPELLCAST_CHANNEL_UPDATE");
 			self:UnregisterEvent("UNIT_SPELLCAST_CHANNEL_STOP");
-			self:UnregisterEvent("UNIT_SPELLCAST_INTERRUPTIBLE");
-			self:UnregisterEvent("UNIT_SPELLCAST_NOT_INTERRUPTIBLE");
 			self:UnregisterEvent("PLAYER_ENTERING_WORLD");
 			self:UnregisterEvent("UNIT_SPELLCAST_START");
 			self:UnregisterEvent("UNIT_SPELLCAST_STOP");
@@ -120,7 +117,7 @@ end
 function CastingBarFrame_GetEffectiveStartColor(self, isChannel, notInterruptible)
 	if self.nonInterruptibleColor and notInterruptible then
 		return self.nonInterruptibleColor;
-	end	
+	end
 	return isChannel and self.startChannelColor or self.startCastColor;
 end
 
@@ -147,7 +144,9 @@ function CastingBarFrame_OnEvent(self, event, ...)
 	end
 	
 	if ( event == "UNIT_SPELLCAST_START" ) then
-		local name, text, texture, startTime, endTime, isTradeSkill, castID, notInterruptible = UnitCastingInfo(unit);
+		local name, text, texture, startTime, endTime, isTradeSkill, castID--[[, notInterruptible]] = UnitCastingInfo(unit);
+		local notInterruptible = false;
+
 		if ( not name or (not self.showTradeSkills and isTradeSkill)) then
 			self:Hide();
 			return;
@@ -172,7 +171,7 @@ function CastingBarFrame_OnEvent(self, event, ...)
 			self.Text:SetText(text);
 		end
 		if ( self.Icon ) then
-			self.Icon:SetTexture(texture);
+			CastingBarFrame_SetIcon(self, texture);
 			if ( self.iconWhenNoninterruptible ) then
 				self.Icon:SetShown(not notInterruptible);
 			end
@@ -249,7 +248,9 @@ function CastingBarFrame_OnEvent(self, event, ...)
 		end
 	elseif ( event == "UNIT_SPELLCAST_DELAYED" ) then
 		if ( self:IsShown() ) then
-			local name, text, texture, startTime, endTime, isTradeSkill, castID, notInterruptible = UnitCastingInfo(unit);
+			local name, text, texture, startTime, endTime, isTradeSkill, castID--[[, notInterruptible]] = UnitCastingInfo(unit);
+			local notInterruptible = false;
+
 			if ( not name or (not self.showTradeSkills and isTradeSkill)) then
 				-- if there is no name, there is no bar
 				self:Hide();
@@ -274,7 +275,9 @@ function CastingBarFrame_OnEvent(self, event, ...)
 			end
 		end
 	elseif ( event == "UNIT_SPELLCAST_CHANNEL_START" ) then
-		local name, text, texture, startTime, endTime, isTradeSkill, notInterruptible, spellID = UnitChannelInfo(unit);
+		local name, text, texture, startTime, endTime, isTradeSkill--[[, notInterruptible]], spellID = UnitChannelInfo(unit);
+		local notInterruptible = false;
+
 		if ( not name or (not self.showTradeSkills and isTradeSkill)) then
 			-- if there is no name, there is no bar
 			self:Hide();
@@ -296,7 +299,7 @@ function CastingBarFrame_OnEvent(self, event, ...)
 			self.Text:SetText(text);
 		end
 		if ( self.Icon ) then
-			self.Icon:SetTexture(texture);
+			CastingBarFrame_SetIcon(self, texture);
 		end
 		if ( self.Spark ) then
 			self.Spark:Hide();
@@ -522,5 +525,14 @@ function CastingBarFrame_SetLook(self, look)
 		self.Flash:SetHeight(49);
 		self.Flash:SetPoint("TOPLEFT", -23, 20);
 		self.Flash:SetPoint("TOPRIGHT", 23, 20);
+	end
+end
+
+function CastingBarFrame_SetIcon(self, icon)
+	if (self.Icon) then
+		if (icon == CASTING_BAR_PLACEHOLDER_FILE_ID) then
+			icon = 0;
+		end
+		self.Icon:SetTexture(icon);
 	end
 end

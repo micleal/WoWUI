@@ -1,6 +1,7 @@
 local function GetStatusBarVisInfoData(widgetID)
 	local widgetInfo = C_UIWidgetManager.GetStatusBarWidgetVisualizationInfo(widgetID);
 	if widgetInfo and widgetInfo.shownState ~= Enum.WidgetShownState.Hidden then
+		widgetInfo.hasTimer = widgetInfo.barValueInSeconds > -1;
 		return widgetInfo;
 	end
 end
@@ -19,50 +20,31 @@ local textureKitRegionFormatStrings = {
 	["Spark"] = "%s-Spark",
 }
 
-local partitionTextureKitString = "%s-BorderTick";
-
-local barColorFromTintValue = {
-	[Enum.StatusBarColorTintValue.Black] = BLACK_FONT_COLOR,
-	[Enum.StatusBarColorTintValue.White] = WHITE_FONT_COLOR,
-	[Enum.StatusBarColorTintValue.Red] = RED_FONT_COLOR,
-	[Enum.StatusBarColorTintValue.Yellow] = YELLOW_FONT_COLOR,
-	[Enum.StatusBarColorTintValue.Orange] = ORANGE_FONT_COLOR,
-	[Enum.StatusBarColorTintValue.Purple] = EPIC_PURPLE_COLOR,
-	[Enum.StatusBarColorTintValue.Green] = GREEN_FONT_COLOR,
-	[Enum.StatusBarColorTintValue.Blue] = RARE_BLUE_COLOR,
-}
-
 local fillTextureKitFormatString = "%s-Fill-%s";
-local DEFAULT_BAR_WIDTH = 215;
 
-function UIWidgetTemplateStatusBarMixin:Setup(widgetInfo, widgetContainer)
-	UIWidgetBaseTemplateMixin.Setup(self, widgetInfo, widgetContainer);
+function UIWidgetTemplateStatusBarMixin:Setup(widgetInfo)
+	UIWidgetBaseTemplateMixin.Setup(self, widgetInfo);
 
-	local frameTextureKit = widgetInfo.frameTextureKit;
-	local fillTextureKit = widgetInfo.textureKit;
+	local frameTextureKit = GetUITextureKitInfo(widgetInfo.frameTextureKitID);
+	local fillTextureKit = GetUITextureKitInfo(widgetInfo.fillTextureKitID);
 	if frameTextureKit and fillTextureKit then
 		local fillAtlas = fillTextureKitFormatString:format(frameTextureKit, fillTextureKit);
 		self.Bar:SetStatusBarAtlas(fillAtlas);
 	end
 
-	local barColor = barColorFromTintValue[widgetInfo.colorTint];
-	if(barColor) then 
-		self.Bar:SetStatusBarColor(barColor:GetRGB());
-		self.Bar.Spark:SetVertexColor(barColor:GetRGB());
-	end 
+	SetupTextureKitOnRegions(frameTextureKit, self.Bar, textureKitRegionFormatStrings, false, true);
 
-	SetupTextureKitOnRegions(frameTextureKit, self.Bar, textureKitRegionFormatStrings, TextureKitConstants.DoNotSetVisibility, TextureKitConstants.UseAtlasSize);
+	self.Bar:SetWidth(widgetInfo.barWidth);
+	self.Bar:SetMinMaxValues(widgetInfo.barMin, widgetInfo.barMax);
+	self.Bar:SetValue(widgetInfo.barValue);
 
-	local barWidth = (widgetInfo.widgetSizeSetting > 0) and widgetInfo.widgetSizeSetting or DEFAULT_BAR_WIDTH;
-	self.Bar:SetWidth(barWidth);
-
-	local minVal, maxVal, barVal = widgetInfo.barMin, widgetInfo.barMax, widgetInfo.barValue;
-	if minVal > 0 and minVal == maxVal and barVal == maxVal then
-		-- If all 3 values are the same and greater than 0, show the bar as full
-		minVal, maxVal, barVal = 0, 1, 1;
+	if widgetInfo.barValueInSeconds > -1 then
+		self.Bar.Label:SetText(SecondsToTime(widgetInfo.barValueInSeconds, true, true, 2, true));
+	else
+		local barPercent = PercentageBetween(widgetInfo.barValue, widgetInfo.barMin, widgetInfo.barMax);
+		local barPercentText = FormatPercentage(barPercent, true);
+		self.Bar.Label:SetText(barPercentText);
 	end
-
-	self.Bar:Setup(widgetContainer, minVal, maxVal, barVal, widgetInfo.barValueTextType, widgetInfo.tooltip, widgetInfo.overrideBarText, widgetInfo.overrideBarTextShownType);
 
 	local showSpark = widgetInfo.barValue > widgetInfo.barMin and widgetInfo.barValue < widgetInfo.barMax;
 	self.Bar.Spark:SetShown(showSpark);
@@ -73,51 +55,15 @@ function UIWidgetTemplateStatusBarMixin:Setup(widgetInfo, widgetContainer)
 
 	self.Label:SetText(widgetInfo.text);
 
-	local labelWidth = 0;
-	local labelHeight = 0;
-	self.Bar:ClearAllPoints();
-	if widgetInfo.text ~= "" then
-		labelWidth = self.Label:GetWidth();
-		labelHeight = self.Label:GetHeight() + 3;
-		self.Bar:SetPoint("TOP", self.Label, "BOTTOM", 0, -8);
-	else
-		self.Bar:SetPoint("TOP", self, "TOP", 0, -8);
-	end
+	local barWidth = self.Bar:GetWidth() + 6;
+	local labelWidth = self.Label:GetWidth();
 
-	self.partitionPool:ReleaseAll();
-
-	local paritionAtlas = partitionTextureKitString:format(frameTextureKit);
-	if C_Texture.GetAtlasInfo(paritionAtlas) then
-		for _, partitionValue in ipairs(widgetInfo.partitionValues) do
-			local partitionTexture = self.partitionPool:Acquire();
-
-			local useAtlasSize = true;
-			partitionTexture:SetAtlas(paritionAtlas, useAtlasSize);
-
-			local partitionPercent = ClampedPercentageBetween(partitionValue, minVal, maxVal);
-			local xOffset = barWidth * partitionPercent;
-
-			partitionTexture:SetPoint("CENTER", self.Bar:GetStatusBarTexture(), "LEFT", xOffset, 0)
-
-			partitionTexture:Show();
-		end
-	end
-
-	local totalWidth = math.max(self.Bar:GetWidth() + 16, labelWidth);
+	local totalWidth = barWidth > labelWidth and barWidth or labelWidth;
 	self:SetWidth(totalWidth);
 
 	local barHeight = self.Bar:GetHeight() + 16;
+	local labelHeight = self.Label:GetHeight() + 7;
 
-	local totalHeight = barHeight + labelHeight;
+	local totalHeight = (widgetInfo.text and widgetInfo.text ~= "") and (barHeight + labelHeight) or barHeight;
 	self:SetHeight(totalHeight);
-end
-
-function UIWidgetTemplateStatusBarMixin:OnLoad()
-	UIWidgetBaseTemplateMixin.OnLoad(self);
-	self.partitionPool = CreateTexturePool(self.Bar, "OVERLAY");
-end
-
-function UIWidgetTemplateStatusBarMixin:OnReset()
-	UIWidgetBaseTemplateMixin.OnReset(self);
-	self.partitionPool:ReleaseAll();
 end

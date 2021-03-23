@@ -189,7 +189,6 @@ function VoiceChatHeadsetButtonMixin:SetCommunityInfo(clubId, streamInfo)
 	self:SetChannelType(Enum.ChatChannelType.Communities);
 	self:SetVoiceChannel(C_VoiceChat.GetChannelForCommunityStream(clubId, streamInfo.streamId));
 	self:GetParent():SetPendingState(C_VoiceChat.IsChannelJoinPending(Enum.ChatChannelType.Communities, self.clubId, self.streamId));
-	self:SetEnabled(not C_VoiceChat.GetJoinClubVoiceChannelError(self.clubId));
 end
 
 function VoiceChatHeadsetButtonMixin:IsCommunityChannel()
@@ -221,31 +220,13 @@ function VoiceChatHeadsetButtonMixin:OnLeave()
 	GameTooltip:Hide();
 end
 
-function VoiceChatHeadsetButtonMixin:GetClubErrorReason()
-	if self.clubId then
-		return C_VoiceChat.GetJoinClubVoiceChannelError(self.clubId);
-	end
-
-	return nil;
-end
-
 function VoiceChatHeadsetButtonMixin:ShowTooltip()
 	local isActive = self:IsVoiceActive();
 	local message = isActive and VOICE_CHAT_LEAVE or VOICE_CHAT_JOIN;
 
 	local tooltip = GameTooltip;
 	tooltip:SetOwner(self, "ANCHOR_RIGHT");
-
-	local errorReason = self:GetClubErrorReason();
-	if errorReason then
-		if errorReason == Enum.VoiceChannelErrorReason.IsBattleNetChannel then
-			GameTooltip_SetTitle(tooltip, ERR_GROUPS_VOICE_CHAT_DISABLED, RED_FONT_COLOR);
-		else
-			GameTooltip_SetTitle(tooltip, VOICECHAT_DISABLED, RED_FONT_COLOR);
-		end
-	else
-		GameTooltip_SetTitle(tooltip, message);
-	end
+	GameTooltip_SetTitle(tooltip, message);
 	tooltip:Show();
 end
 

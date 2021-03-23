@@ -1,6 +1,12 @@
 -- DO NOT PUT ANY SENSITIVE CODE IN THIS FILE
 -- This file does not have access to the secure (forbidden) code.  It is only called via Outbound and no function in this file should ever return values.
 
+function StoreShowPreview(name, modelID, modelSceneID)
+	local frame = ModelPreviewFrame;
+	ModelPreviewFrame_ShowModel(modelID, modelSceneID, false);
+	frame.Display.Name:SetText(name);
+end
+
 function StoreShowPreviews(displayInfoEntries)
 	ModelPreviewFrame_ShowModels(displayInfoEntries, false);
 end
@@ -30,7 +36,8 @@ if (InGlue()) then
 		button1 = OKAY,
 		escapeHides = true,
 		OnAccept = function()
-			local data = GlueDialog.data;
+			-- For Classic, we don't like how this is behaving with FCM. Disabling for now.
+			--[[local data = GlueDialog.data;
 
 			if (not data.shouldHandle) then
 				VASCharacterGUID = nil;
@@ -45,7 +52,7 @@ if (InGlue()) then
 				UpdateCharacterList(true);
 			end
 
-			VASCharacterGUID = data.guid;
+			VASCharacterGUID = data.guid;]]
 		end
 	}
 
